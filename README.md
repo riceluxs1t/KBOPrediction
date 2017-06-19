@@ -1,3 +1,6 @@
+## Note
+Uses python3.6
+
 ## Usage
 from scrape import *
 
