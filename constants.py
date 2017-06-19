@@ -1,4 +1,5 @@
-
+# The keys are the displayed team names in the days data and the values are the internal
+# names of each team.
 TEAM_NAMES = {
     'SK': 'SK',
     'KIA': 'KIA',
@@ -12,6 +13,8 @@ TEAM_NAMES = {
     '한화': 'HANHWA',
 }
 
+# The keys are the displayed stadium names in the days data and the values are the internal
+# names of each stadium.
 STADIUM_NAMES = {
     '문학': "MoonHak",
     '대구': "DaeGu",
@@ -28,5 +31,3 @@ STADIUM_NAMES = {
     '고척': 'GoChuk',
     '수원': 'SuWon'
 }
-
-UPDATE_STRING = '업데이트 예정'

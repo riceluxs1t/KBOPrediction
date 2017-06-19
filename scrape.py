@@ -10,7 +10,11 @@ class DateParsingException(Exception):
     """ An exception thrown when the input parsing date is malformed. """
 
 
-class DayDataScraper(object):
+class DetailDataNotFoundException(Exception):
+    """ An exception thrown when the detailed page does not seem to have the data script tag"""
+
+
+class DayDataParser(object):
     """ A class used to scrape day's data.
 
     Supports the following three formats of data fetching.
@@ -24,7 +28,7 @@ class DayDataScraper(object):
         self.month = month
         self.day = day
 
-    def get_raw_page(self):
+    def _get_raw_page(self):
         """ Returns the raw data on some target page. The NaverSports page is used to
         get the raw data.
 
@@ -39,47 +43,11 @@ class DayDataScraper(object):
 
         return requests.get(self.URL, params=payload).text
 
-    def parse_raw_page(self, page, filter_function=None):
-        """ Parses and returns the raw HTML page into some format of choice.
-        BeautifulSoup is used to turn the HTML page into some tree format that is easy to traverse.
-        Given the tree, extracts the HTML element that contains information we need
-        and returns all the div elements inside some table that each corresponds to a single day.
+    def _extract(self, days):
+        """Given days data, extracts match results and turns them into an internal representation
+        of a match information, which is the MatchInfo class.
 
-        Note that this code assumes a certain HTML page structure and is thus fragile.
-
-        If some filter_function is given, it is applied and returns some subset of days.
-        The filter function must take as input the div element that corresponds to a single day.
-        """
-        tree = BeautifulSoup(page, "html.parser")
-        days_table = tree.find_all("div", class_="tb_wrap", id="calendarWrap")[0]
-        all_days = days_table.find_all("div", recursive=False)
-
-        # If day is specified, filter by the given day.
-        if self.day:
-            all_days = list(filter(
-                lambda day: (
-                    int(re.findall(
-                        "\d+.\d+",
-                        str(day.find_all("span", class_="td_date")[0])
-                    )[0].split(".")[1]) == int(self.day)
-                ),
-                all_days
-            ))
-
-        if filter_function:
-            return list(filter(filter_function, all_days))
-        return all_days
-
-
-class DayInterpreter(object):
-    """ An interpreter class that provides some ways of interpreting each "day". """
-    def __init__(self, year, month):
-        self.year = year
-        self.month = month
-
-    def extract(self, days, teams=None):
-        """Given days data, extracts match results. Each match result is an instance of
-        MatchInfo class. If teams is specified, only returns those teams's matches.
+        Defines some inner helper functions.
         """
 
         def is_no_match(day):
@@ -157,8 +125,8 @@ class DayInterpreter(object):
                     continue
 
                 # Specific teams are specified and this match is not relevant.
-                if teams and (match_teams[0] not in teams and match_teams[1] not in teams):
-                    continue
+                # if teams and (match_teams[0] not in teams and match_teams[1] not in teams):
+                #     continue
 
                 day_result.append(
                     MatchResult(
@@ -179,9 +147,40 @@ class DayInterpreter(object):
             result += process_each_day(each_day)
         return result
 
+    def parse(self, filter_function=None):
+        """ Parses and returns the raw HTML page into some format of choice.
+        BeautifulSoup is used to turn the HTML page into some tree format that is easy to traverse.
+        Given the tree, extracts the HTML element that contains information we need
+        and returns all the div elements inside some table that each corresponds to a single day.
+
+        Note that this code assumes a certain HTML page structure and is thus fragile.
+
+        If some filter_function is given, it is applied and returns some subset of days.
+        The filter function must take as input the div element that corresponds to a single day.
+        """
+        tree = BeautifulSoup(self._get_raw_page(), "html.parser")
+        days_table = tree.find_all("div", class_="tb_wrap", id="calendarWrap")[0]
+        all_days = days_table.find_all("div", recursive=False)
+
+        # If day is specified, filter by the given day.
+        if self.day:
+            all_days = list(filter(
+                lambda day: (
+                    int(re.findall(
+                        "\d+.\d+",
+                        str(day.find_all("span", class_="td_date")[0])
+                    )[0].split(".")[1]) == int(self.day)
+                ),
+                all_days
+            ))
+
+        if filter_function:
+            return list(filter(filter_function, all_days))
+        return self._extract(all_days)
+
 
 class MatchResult(object):
-    """ A class that represents each match. """
+    """ A class that internally represents each match. """
     def __init__(
         self,
         year,
@@ -264,3 +263,159 @@ class MatchResult(object):
             return int(rst)
 
         raise DateParsingException()
+
+
+class MatchDetailParser(object):
+    """ A class that scrapes the details of a specific match between the given two teams
+    on a given date and turns it into an internal representation of a match detail.
+
+    This data includes
+    0) The key events of a game.
+    1) The scoreboard of each inning
+    2) The batter breakdown result of how each batter performed for the match.
+    This includes the batter's batting average as of the end of that game and how many
+    hits (안타), runs (득점. 홈을 밟은 횟수), RBI (타점. 홈으로 불러들인 횟수) he made.
+    3) The pitcher breakdown result of how each pitcher performed.
+    This includes the pitcher's total # of innings, how many batters he took on,
+    how many hits, four balls, home runs he allowed, how many strikeouts he scored
+    how many scores he allowed, how many mistakes he was at fault for and his ERA
+    by the end of the game.
+    """
+    TEAM_NAMES = {
+        'SK': 'SK',
+        'KIA': 'KIA',
+        'NC': 'NC',
+        'LG': 'LG',
+        'kt': 'KT',
+        '삼성': 'SAMSUNG',
+        '두산': 'DOOSAN',
+        '넥센': 'NEXEN',
+        '롯데': 'LOTTE',
+        '한화': 'HANHWA',
+    }
+
+    # The mapping between the internal team names and the scraper specific names.
+    # The team names not in the mapping are identical.
+    TEAM_NAME_MAPPING = {
+        'HANHWA': 'HH',
+        'KT': 'KT',
+        'KIA': 'HT',
+        'NEXEN': 'WO',
+        'DOOSAN': 'OB',
+        'SAMSUNG': 'SS',
+    }
+
+    URL = 'http://sports.news.naver.com/gameCenter/gameRecord.nhn'
+
+    def __init__(self, year, month, day, away_team_name, home_team_name):
+        """home_team_name and away team name must be in the format specified in constants.py
+        More concretely, it has to be one of the values of TEAM NAMES.
+        """
+        self.year = year
+        self.month = month
+        self.day = day
+        self.home_team_name = self.TEAM_NAME_MAPPING.get(home_team_name, home_team_name)
+        self.away_team_name = self.TEAM_NAME_MAPPING.get(away_team_name, away_team_name)
+        self.game_id = '{0}{1}{2}{3}{4}0{0}'.format(
+            self.year,
+            self.month,
+            self.day,
+            self.away_team_name,
+            self.home_team_name,
+        )
+
+    def _get_raw_page(self):
+        """ Returns the raw data on some target page. The NaverSports game result page is used to
+        get the raw data.
+
+        url: http://sports.news.naver.com/gameCenter/gameResult.nhn
+        params: category=kbo&gameId=%s
+        """
+        payload = {
+            'category': 'kbo',
+            'gameId': self.game_id
+        }
+
+        return requests.get(self.URL, params=payload).text
+
+    def _parse_source_script_that_has_data(self, page):
+        """ Parses the raw string of a script tag so that we can extract out the data part.
+        This is unfortunately done because Naver renders the actual data
+        using Javascript on the client side.
+
+        Very ugly piece of code. Basically, finds the source tag that has the actual data
+        using some keyword and then extracts out the json formatted data by some
+        custom string processing.
+        """
+        tree = BeautifulSoup(page, "html.parser")
+        scripts = tree.find_all("script")
+
+        # Note that the logic sadly relies on these two magic keywords positions.
+        magic_keyword = 'DataClass = jindo.$Class('
+        magic_keyword_two = '_data'
+
+        data_script = None
+        for script in scripts:
+            if magic_keyword in str(script):
+                data_script = str(script)
+                break
+
+        if data_script is None:
+            raise DetailDataNotFoundException()
+
+        # Process this string by looking for some valid JSON format
+        argument_part = data_script[data_script.index(magic_keyword) + len(magic_keyword):]
+        data_part = argument_part[argument_part.index(magic_keyword_two) + len(magic_keyword_two):]
+
+        string_of_interest = data_part[data_part.index('{'):]
+        paren_count = 1
+
+        # Algorithm 101. Finds the end position of json data by keeping track of
+        # the numbers of {, }.
+        idx = 1
+        while paren_count > 0:
+            if string_of_interest[idx] == '{':
+                paren_count += 1
+            elif string_of_interest[idx] == '}':
+                paren_count -= 1
+            idx += 1
+        return json.loads(string_of_interest[:idx])
+
+    def parse(self, page):
+        """ Parses the raw page for some information.
+        The info_type parameter must be a valid key. i.e. one of
+        1) etcRecords: key evetns information
+        2) pitchersBoxscore: pitcher breakdown information
+        3) battersBoxscore: batter breakdown information
+        4) scoreBoard: scoreboard information
+        """
+        data_in_json = self._parse_source_script_that_has_data(page)
+        # TODO: finalize the internal data structure
+
+
+class MatchDetail(object):
+    """ A data structure that is an internal representation of a match's details.
+    Includes 1) key events, 2) pitcher breakdown information 3) batter breakdown information
+    4) per inning scoreboard.
+    """
+    def __init__(
+        self,
+        year,
+        month,
+        day,
+        away_team_name,
+        home_team_name,
+        score_board,
+        pitcher_info,
+        batter_info,
+        key_events
+    ):
+        self.year = year
+        self.month = month
+        self.day = day
+        self.away_team_name = away_team_name
+        self.home_team_name = home_team_name
+        self.score_board = score_board
+        self.pitcher_info = pitcher_info
+        self.batter_info = batter_info
+        self.key_events = key_events

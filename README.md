@@ -4,9 +4,7 @@ Uses python3.6
 ## Usage
 from scrape import *
 
-scraper = DayDataScraper('2017', '05')
+day_data_parser = DayDataParser('2017', '05')
 
-interpreter = DayInterpreter('2017', '05')
-
-may_data = interpreter.extract(scraper.parse_raw_page(scraper.get_raw_page()))
+may_data = day_data_parser.parse()
 
