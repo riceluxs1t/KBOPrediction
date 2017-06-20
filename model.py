@@ -130,6 +130,10 @@ class Model:
     def train(self, x_data, y_data, keep_prop=KEEP_RATE):
         return self.sess.run([self.cost, self.optimizer], feed_dict={
             self.X: x_data, self.Y: y_data, self.keep_prob: keep_prop})
+    
+    @property
+    def get_sess(self):
+        return self.sess
 
 class Runner:
 
@@ -137,13 +141,13 @@ class Runner:
         tf.set_random_seed(777)  # reproducibility
 
     def train_run(self, model, x_train, y_train):
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            for epoch in xrange(TRAINING_EPOCHS):
-                feed_dict = {X: x_train, Y: y_train, keep_prob: KEEP_RATE}
-                c, _ = model.train([cost, optimizer], feed_dict=feed_dict)
+        model.get_sess.run(tf.global_variables_initializer())
+        for epoch in xrange(TRAINING_EPOCHS):
+            feed_dict = {X: x_train, Y: y_train, keep_prob: KEEP_RATE}
+            c, _ = model.train([cost, optimizer], feed_dict=feed_dict)
 
-                print ('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.9f}'.format(c))
+            print ('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.9f}'.format(c))
+
         #TODO: Save frozen graph of the tf after training.
 
     def get_accuracy(self, model, x_test, y_test):
