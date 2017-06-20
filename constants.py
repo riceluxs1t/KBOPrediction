@@ -36,3 +36,7 @@ STADIUM_NAMES = {
 LEARNING_RATE = 0.001
 TRAINING_EPOCHS = 500
 KEEP_RATE = 0.7
+
+## Data location
+DATA_17 = "2017_data.txt"
+DATA_16 = "2016_data.txt"

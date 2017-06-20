@@ -11,7 +11,7 @@ from tensorflow.python.framework import ops, tensor_shape, tensor_util
 from tensorflow.python.ops import math_ops, random_ops, array_ops
 from tensorflow.python.layers import utils
 
-from constants.py import *
+from constants import *
 
 
 def selu(x):
