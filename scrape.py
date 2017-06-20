@@ -362,24 +362,24 @@ class MatchDetailParser(object):
         data_in_json = self._parse_source_script_that_has_data()
 
         away_team_standing = {
-            'draws': data_in_json['awayStandings']['d'],
-            'era': data_in_json['awayStandings']['era'],
-            'hra': data_in_json['awayStandings']['hra'],
-            'wra':  data_in_json['awayStandings']['wra'],
-            'wins': data_in_json['awayStandings']['w'],
-            'loses': data_in_json['awayStandings']['l'],
-            'rank': data_in_json['awayStandings']['rank'],
+            'draws': int(data_in_json['awayStandings']['d']),
+            'era': float(data_in_json['awayStandings']['era']),
+            'hra': float(data_in_json['awayStandings']['hra']),
+            'wra':  float(data_in_json['awayStandings']['wra']),
+            'wins': int(data_in_json['awayStandings']['w']),
+            'loses': int(data_in_json['awayStandings']['l']),
+            'rank': int(data_in_json['awayStandings']['rank']),
             'name': TEAM_NAMES[data_in_json['awayStandings']['name']],
         }
 
         home_team_standing = {
-            'draws': data_in_json['homeStandings']['d'],
-            'era': data_in_json['homeStandings']['era'],
-            'hra': data_in_json['homeStandings']['hra'],
-            'wra': data_in_json['homeStandings']['wra'],
-            'wins': data_in_json['homeStandings']['w'],
-            'loses': data_in_json['homeStandings']['l'],
-            'rank': data_in_json['homeStandings']['rank'],
+            'draws': int(data_in_json['homeStandings']['d']),
+            'era': float(data_in_json['homeStandings']['era']),
+            'hra': float(data_in_json['homeStandings']['hra']),
+            'wra': float(data_in_json['homeStandings']['wra']),
+            'wins': int(data_in_json['homeStandings']['w']),
+            'loses': int(data_in_json['homeStandings']['l']),
+            'rank': int(data_in_json['homeStandings']['rank']),
             'name': TEAM_NAMES[data_in_json['homeStandings']['name']],
         }
 
@@ -403,21 +403,22 @@ class MatchDetailParser(object):
             for pitcher in data_in_json['pitchersBoxscore'][side]:
                 pitcher_info[side].append(
                     {
-                        'at_bats': pitcher['ab'],  # 타수
-                        'hits': pitcher['hit'],  # 안타 맞은 수
-                        'bbhp': pitcher['bbhp'],  # 4사
-                        'home_runs': pitcher['hr'],  # 홈런 맞은 수
-                        'strike_outs': pitcher['kk'],  # 스트라이크 잡은 수
-                        'scores_lost': pitcher['r'],  # 내준 점수
-                        'errors': pitcher['er'],  # 본인 실수
-                        'era': pitcher['era'],  # 게임 종료 시점의 방어율
+                        'at_bats': int(pitcher['ab']),  # 타수
+                        'hits': int(pitcher['hit']),  # 안타 맞은 수
+                        'bbhp': int(pitcher['bbhp']),  # 4사
+                        'home_runs': int(pitcher['hr']),  # 홈런 맞은 수
+                        'strike_outs': int(pitcher['kk']),  # 스트라이크 잡은 수
+                        'scores_lost': int(pitcher['r']),  # 내준 점수
+                        'errors': int(pitcher['er']),  # 본인 실수
+                        'era': float(pitcher['era']),  # 게임 종료 시점의 방어율
                         'name': pitcher['name'],
-                        'innings': pitcher['inn'][0],  # 던진 이닝 수. 내림
-                        'wins': pitcher['w'],  # 투수 승수
-                        'loses': pitcher['l'],  # 투수 패수
-                        'saves': pitcher['s'],  # 투수 세이브수
-                        'num_balls_thrown': pitcher['bf'],  # 던진 공 수
-                        'game_count': pitcher['gameCount'],  # 총 게임 참여 수
+                        # TODO: process the 1/2, 2/3 unicode and don't round down.
+                        'innings': int(pitcher['inn'][0]),  # 던진 이닝 수. 내림
+                        'wins': int(pitcher['w']),  # 투수 승수
+                        'loses': int(pitcher['l']),  # 투수 패수
+                        'saves': int(pitcher['s']),  # 투수 세이브수
+                        'num_balls_thrown': int(pitcher['bf']),  # 던진 공 수
+                        'game_count': int(pitcher['gameCount']),  # 총 게임 참여 수
                     }
                 )
 
@@ -425,11 +426,11 @@ class MatchDetailParser(object):
             for batter in data_in_json['battersBoxscore'][side]:
                 batter_info[side].append(
                     {
-                        'at_bats': batter['ab'],  # 타석 참여 횟수
-                        'hits': batter['hit'],  # 안타 수
-                        'hra': batter['hra'],  # 게임 종료 시점의 타율
-                        'rbi': batter['rbi'],  # 타점
-                        'runs': batter['run'],  # 득점
+                        'at_bats': int(batter['ab']),  # 타석 참여 횟수
+                        'hits': int(batter['hit']),  # 안타 수
+                        'hra': float(batter['hra']),  # 게임 종료 시점의 타율
+                        'rbi': int(batter['rbi']),  # 타점
+                        'runs': int(batter['run']),  # 득점
                         'name': batter['name']
                     }
                 )
