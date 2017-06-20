@@ -148,7 +148,8 @@ class Runner:
 
             print ('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.9f}'.format(c))
 
-        #TODO: Save frozen graph of the tf after training.
+        #TODO: Save frozen graph of the tf after training. 
+        #Refer to: https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc
 
     def get_accuracy(self, model, x_test, y_test):
         return model.get_accuracy(x_test, y_test)
