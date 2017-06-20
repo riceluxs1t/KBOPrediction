@@ -89,6 +89,10 @@ team_standing.loses : 종료 시점의 팀의 패수
 
 team_standing.rank : 종료 시점의 팀의 랭킹
 
+
+## For example,
+some specific game's data (with some pitchers and batters omitted for brevity)
+
 ```json
 {
     "year": "2017",
