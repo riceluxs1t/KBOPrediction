@@ -6,16 +6,12 @@ import requests
 from constants import TEAM_NAMES, STADIUM_NAMES
 
 
-class DateParsingException(Exception):
-    """ An exception thrown when the input parsing date is malformed. """
-
-
 class DetailDataNotFoundException(Exception):
     """ An exception thrown when the detailed page does not seem to have the data script tag"""
 
 
-class DayDataParser(object):
-    """ A class used to scrape day's data.
+class MatchSummaryParser(object):
+    """ A class used to scrape match summary data.
 
     Supports the following three formats of data fetching.
     1) Get a whole month's match data.
@@ -129,7 +125,7 @@ class DayDataParser(object):
                 #     continue
 
                 day_result.append(
-                    MatchResult(
+                    MatchSummary(
                         self.year,
                         date,
                         time,
@@ -179,8 +175,8 @@ class DayDataParser(object):
         return self._extract(all_days)
 
 
-class MatchResult(object):
-    """ A class that internally represents each match. """
+class MatchSummary(object):
+    """ A class that internally represents each match's summary. """
     def __init__(
         self,
         year,
@@ -193,8 +189,10 @@ class MatchResult(object):
         stadium
     ):
         self.year = year
-        self.date = self.convert_date_to_num(date)
-        self.time = self.convert_date_to_num(time)
+        self.month, self.day = date.split('.')
+        self.day = self.day.zfill(2)
+        self.month = self.month.zfill(2)
+        self.time = time
         self.home_team_name = home_team_name
         self.away_team_name = away_team_name
         self.home_team_score = int(home_team_score)
@@ -209,8 +207,8 @@ class MatchResult(object):
     def __str__(self):
         return "{0} {1} {2} {3} {4} vs {5} - {6} : {7}".format(
             self.year,
-            self.date,
-            self.time,
+            self.month,
+            self.day,
             self.stadium,
             self.home_team_name,
             self.away_team_name,
@@ -221,8 +219,8 @@ class MatchResult(object):
     def __repr__(self):
         return "{0} {1} {2} {3} {4} vs {5} - {6} : {7}".format(
             self.year,
-            self.date,
-            self.time,
+            self.month,
+            self.day,
             self.stadium,
             self.home_team_name,
             self.away_team_name,
@@ -237,32 +235,16 @@ class MatchResult(object):
         return self.home_team_score
 
     def get_away_team_name(self):
-        return self.home_team_name
+        return self.away_team_name
 
     def get_away_team_score(self):
-        return self.home_team_score
+        return self.away_team_score
 
     def get_winner(self):
         return self.winner
 
     def to_json(self):
         return json.dumps(self.__dict__)
-
-    def convert_date_to_num(self, date):
-        if '.' in date:
-            a = date.split('.')
-            if int(a[0]) < 10:
-                a[0] = '0' + a[0]
-            if int(a[1]) < 10:
-                a[1] = '0' + a[1]
-            rst = str(self.year) + a[0] + a[1]
-            return int(rst)
-        elif ':' in date:
-            a = date.split(':')
-            rst = a[0] + a[1]
-            return int(rst)
-
-        raise DateParsingException()
 
 
 class MatchDetailParser(object):
@@ -281,19 +263,6 @@ class MatchDetailParser(object):
     how many scores he allowed, how many mistakes he was at fault for and his ERA
     by the end of the game.
     """
-    TEAM_NAMES = {
-        'SK': 'SK',
-        'KIA': 'KIA',
-        'NC': 'NC',
-        'LG': 'LG',
-        'kt': 'KT',
-        '삼성': 'SAMSUNG',
-        '두산': 'DOOSAN',
-        '넥센': 'NEXEN',
-        '롯데': 'LOTTE',
-        '한화': 'HANHWA',
-    }
-
     # The mapping between the internal team names and the scraper specific names.
     # The team names not in the mapping are identical.
     TEAM_NAME_MAPPING = {
@@ -303,7 +272,11 @@ class MatchDetailParser(object):
         'NEXEN': 'WO',
         'DOOSAN': 'OB',
         'SAMSUNG': 'SS',
+        'LOTTE': 'LT'
     }
+
+    # The mapping between the scrapper specific names and hte internal team names.
+    REVERSE_NAME_MAPPING = {v: k for k, v in TEAM_NAME_MAPPING.items()}
 
     URL = 'http://sports.news.naver.com/gameCenter/gameRecord.nhn'
 
@@ -335,10 +308,10 @@ class MatchDetailParser(object):
             'category': 'kbo',
             'gameId': self.game_id
         }
-
+        print(self.game_id)
         return requests.get(self.URL, params=payload).text
 
-    def _parse_source_script_that_has_data(self, page):
+    def _parse_source_script_that_has_data(self):
         """ Parses the raw string of a script tag so that we can extract out the data part.
         This is unfortunately done because Naver renders the actual data
         using Javascript on the client side.
@@ -347,7 +320,7 @@ class MatchDetailParser(object):
         using some keyword and then extracts out the json formatted data by some
         custom string processing.
         """
-        tree = BeautifulSoup(page, "html.parser")
+        tree = BeautifulSoup(self._get_raw_page(), "html.parser")
         scripts = tree.find_all("script")
 
         # Note that the logic sadly relies on these two magic keywords positions.
@@ -381,22 +354,104 @@ class MatchDetailParser(object):
             idx += 1
         return json.loads(string_of_interest[:idx])
 
-    def parse(self, page):
-        """ Parses the raw page for some information.
-        The info_type parameter must be a valid key. i.e. one of
-        1) etcRecords: key evetns information
-        2) pitchersBoxscore: pitcher breakdown information
-        3) battersBoxscore: batter breakdown information
-        4) scoreBoard: scoreboard information
+    def parse(self):
+        """ Parses the raw page for the following information.
+        1) pitcher breakdown information 2) batter breakdown information
+        3) per inning scoreboard. 4) away team standing 5) home team standing.
         """
-        data_in_json = self._parse_source_script_that_has_data(page)
-        # TODO: finalize the internal data structure
+        data_in_json = self._parse_source_script_that_has_data()
+
+        away_team_standing = {
+            'draws': data_in_json['awayStandings']['d'],
+            'era': data_in_json['awayStandings']['era'],
+            'hra': data_in_json['awayStandings']['hra'],
+            'wra':  data_in_json['awayStandings']['wra'],
+            'wins': data_in_json['awayStandings']['w'],
+            'loses': data_in_json['awayStandings']['l'],
+            'rank': data_in_json['awayStandings']['rank'],
+            'name': TEAM_NAMES[data_in_json['awayStandings']['name']],
+        }
+
+        home_team_standing = {
+            'draws': data_in_json['homeStandings']['d'],
+            'era': data_in_json['homeStandings']['era'],
+            'hra': data_in_json['homeStandings']['hra'],
+            'wra': data_in_json['homeStandings']['wra'],
+            'wins': data_in_json['homeStandings']['w'],
+            'loses': data_in_json['homeStandings']['l'],
+            'rank': data_in_json['homeStandings']['rank'],
+            'name': TEAM_NAMES[data_in_json['homeStandings']['name']],
+        }
+
+        # R = 스코어, H = 안타, E = 실수,에러, B = 볼넷 혹은 몸에 맞는 공.
+        score_board = {
+            'scores': data_in_json['scoreBoard']['inn'],
+            'summary': data_in_json['scoreBoard']['rheb']
+        }
+
+        pitcher_info = {
+            'home': [],
+            'away': []
+        }
+
+        batter_info = {
+            'home': [],
+            'away': []
+        }
+
+        for side in ['home', 'away']:
+            for pitcher in data_in_json['pitchersBoxscore'][side]:
+                pitcher_info[side].append(
+                    {
+                        'at_bats': pitcher['ab'],  # 타수
+                        'hits': pitcher['hit'],  # 안타 맞은 수
+                        'bbhp': pitcher['bbhp'],  # 4사
+                        'home_runs': pitcher['hr'],  # 홈런 맞은 수
+                        'strike_outs': pitcher['kk'],  # 스트라이크 잡은 수
+                        'scores_lost': pitcher['r'],  # 내준 점수
+                        'errors': pitcher['er'],  # 본인 실수
+                        'era': pitcher['era'],  # 게임 종료 시점의 방어율
+                        'name': pitcher['name'],
+                        'innings': pitcher['inn'][0],  # 던진 이닝 수. 내림
+                        'wins': pitcher['w'],  # 투수 승수
+                        'loses': pitcher['l'],  # 투수 패수
+                        'saves': pitcher['s'],  # 투수 세이브수
+                        'num_balls_thrown': pitcher['bf'],  # 던진 공 수
+                        'game_count': pitcher['gameCount'],  # 총 게임 참여 수
+                    }
+                )
+
+        for side in ['home', 'away']:
+            for batter in data_in_json['battersBoxscore'][side]:
+                batter_info[side].append(
+                    {
+                        'at_bats': batter['ab'],  # 타석 참여 횟수
+                        'hits': batter['hit'],  # 안타 수
+                        'hra': batter['hra'],  # 게임 종료 시점의 타율
+                        'rbi': batter['rbi'],  # 타점
+                        'runs': batter['run'],  # 득점
+                        'name': batter['name']
+                    }
+                )
+
+        return MatchDetail(
+            self.year,
+            self.month,
+            self.day,
+            self.REVERSE_NAME_MAPPING.get(self.away_team_name, self.away_team_name),
+            self.REVERSE_NAME_MAPPING.get(self.home_team_name, self.home_team_name),
+            score_board,
+            pitcher_info,
+            batter_info,
+            away_team_standing,
+            home_team_standing
+        )
 
 
 class MatchDetail(object):
     """ A data structure that is an internal representation of a match's details.
-    Includes 1) key events, 2) pitcher breakdown information 3) batter breakdown information
-    4) per inning scoreboard.
+    Includes 1) pitcher breakdown information 2) batter breakdown information
+    3) per inning scoreboard. 4) away team standing 5) home team standing.
     """
     def __init__(
         self,
@@ -408,7 +463,8 @@ class MatchDetail(object):
         score_board,
         pitcher_info,
         batter_info,
-        key_events
+        away_team_standing,
+        home_team_standing
     ):
         self.year = year
         self.month = month
@@ -418,4 +474,8 @@ class MatchDetail(object):
         self.score_board = score_board
         self.pitcher_info = pitcher_info
         self.batter_info = batter_info
-        self.key_events = key_events
+        self.away_team_standing = away_team_standing
+        self.home_team_standing = home_team_standing
+
+    def to_json(self):
+        return json.dumps(self.__dict__)
