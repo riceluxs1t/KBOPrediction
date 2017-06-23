@@ -76,41 +76,35 @@ class Model:
     def _build_net(self):
         with tf.variable_scope(self.name):
             # input place holders
-            self.X = tf.placeholder(tf.float32, [None, 40]) # TODO : Format data correctly.
+            self.X = tf.placeholder(tf.float32, [None, 30])
             self.Y = tf.placeholder(tf.float32, [None, 1]) # Win : 1 Lose : 0
 
             # dropout (keep_prob) rate  0.7 on training, but should be 1 for testing
             self.keep_prob = tf.placeholder(tf.float32)
 
             # weights & bias for nn layers
-            W1 = tf.get_variable("W1", shape=[40, 512],
+            W1 = tf.get_variable("W1", shape=[30, 100],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            b1 = tf.Variable(tf.random_normal([512]))
+            b1 = tf.Variable(tf.random_normal([100]))
             L1 = selu(tf.matmul(X, W1) + b1)
             L1 = dropout_selu(L1, keep_prob=keep_prob)
 
-            W2 = tf.get_variable("W2", shape=[512, 512],
+            W2 = tf.get_variable("W2", shape=[100, 100],
                                  initializer=tf.contrib.layers.xavier_initializer())
             b2 = tf.Variable(tf.random_normal([512]))
             L2 = selu(tf.matmul(L1, W2) + b2)
             L2 = dropout_selu(L2, keep_prob=keep_prob)
 
-            W3 = tf.get_variable("W3", shape=[512, 512],
+            W3 = tf.get_variable("W3", shape=[100, 50],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            b3 = tf.Variable(tf.random_normal([512]))
+            b3 = tf.Variable(tf.random_normal([50]))
             L3 = selu(tf.matmul(L2, W3) + b3)
             L3 = dropout_selu(L3, keep_prob=keep_prob)
 
-            W4 = tf.get_variable("W4", shape=[512, 512],
+            W4 = tf.get_variable("W4", shape=[50, 1],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            b4 = tf.Variable(tf.random_normal([512]))
-            L4 = selu(tf.matmul(L3, W4) + b4)
-            L4 = dropout_selu(L4, keep_prob=keep_prob)
-
-            W5 = tf.get_variable("W5", shape=[512, 1],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            b5 = tf.Variable(tf.random_normal([1]))
-            self.hypothesis = tf.matmul(L4, W5) + b5 # Probability of winning
+            b4 = tf.Variable(tf.random_normal([1]))
+            self.hypothesis = tf.matmul(L3, W4) + b4 # Probability of winning
 
         # define cost/loss & optimizer
         self.cost = tf.reduce_sum(tf.square(self.hypothesis - Y)) # TODO: Need to find a more suiting convex function.
