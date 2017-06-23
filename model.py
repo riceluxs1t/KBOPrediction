@@ -76,14 +76,14 @@ class Model:
     def _build_net(self):
         with tf.variable_scope(self.name):
             # input place holders
-            self.X = tf.placeholder(tf.float32, [None, 30])
+            self.X = tf.placeholder(tf.float32, [None, 60])
             self.Y = tf.placeholder(tf.float32, [None, 1]) # Win : 1 Lose : 0
 
             # dropout (keep_prob) rate  0.7 on training, but should be 1 for testing
             self.keep_prob = tf.placeholder(tf.float32)
 
             # weights & bias for nn layers
-            W1 = tf.get_variable("W1", shape=[30, 100],
+            W1 = tf.get_variable("W1", shape=[60, 100],
                                  initializer=tf.contrib.layers.xavier_initializer())
             b1 = tf.Variable(tf.random_normal([100]))
             L1 = selu(tf.matmul(self.X, W1) + b1)
