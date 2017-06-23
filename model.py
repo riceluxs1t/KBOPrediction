@@ -86,20 +86,20 @@ class Model:
             W1 = tf.get_variable("W1", shape=[30, 100],
                                  initializer=tf.contrib.layers.xavier_initializer())
             b1 = tf.Variable(tf.random_normal([100]))
-            L1 = selu(tf.matmul(X, W1) + b1)
-            L1 = dropout_selu(L1, keep_prob=keep_prob)
+            L1 = selu(tf.matmul(self.X, W1) + b1)
+            L1 = dropout_selu(L1, keep_prob=self.keep_prob)
 
             W2 = tf.get_variable("W2", shape=[100, 100],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            b2 = tf.Variable(tf.random_normal([512]))
+            b2 = tf.Variable(tf.random_normal([100]))
             L2 = selu(tf.matmul(L1, W2) + b2)
-            L2 = dropout_selu(L2, keep_prob=keep_prob)
+            L2 = dropout_selu(L2, keep_prob=self.keep_prob)
 
             W3 = tf.get_variable("W3", shape=[100, 50],
                                  initializer=tf.contrib.layers.xavier_initializer())
             b3 = tf.Variable(tf.random_normal([50]))
             L3 = selu(tf.matmul(L2, W3) + b3)
-            L3 = dropout_selu(L3, keep_prob=keep_prob)
+            L3 = dropout_selu(L3, keep_prob=self.keep_prob)
 
             W4 = tf.get_variable("W4", shape=[50, 1],
                                  initializer=tf.contrib.layers.xavier_initializer())
@@ -107,8 +107,8 @@ class Model:
             self.hypothesis = tf.matmul(L3, W4) + b4 # Probability of winning
 
         # define cost/loss & optimizer
-        self.cost = tf.reduce_sum(tf.square(self.hypothesis - Y)) # TODO: Need to find a more suiting convex function.
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(cost)
+        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO: Need to find a more suiting convex function.
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(self.cost)
 
         # Test model and check accuracy
         correct_prediction = tf.equal(
@@ -136,9 +136,8 @@ class Runner:
 
     def train_run(self, model, x_train, y_train):
         model.get_sess.run(tf.global_variables_initializer())
-        for epoch in xrange(TRAINING_EPOCHS):
-            feed_dict = {X: x_train, Y: y_train, keep_prob: KEEP_RATE}
-            c, _ = model.train([cost, optimizer], feed_dict=feed_dict)
+        for epoch in range(TRAINING_EPOCHS):
+            c, _ = model.train(x_train, y_train)
 
             print ('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.9f}'.format(c))
 
