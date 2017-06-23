@@ -76,14 +76,14 @@ class Model:
     def _build_net(self):
         with tf.variable_scope(self.name):
             # input place holders
-            self.X = tf.placeholder(tf.float32, [None, 60])
+            self.X = tf.placeholder(tf.float32, [None, 58])
             self.Y = tf.placeholder(tf.float32, [None, 1]) # Win : 1 Lose : 0
 
             # dropout (keep_prob) rate  0.7 on training, but should be 1 for testing
             self.keep_prob = tf.placeholder(tf.float32)
 
             # weights & bias for nn layers
-            W1 = tf.get_variable("W1", shape=[60, 100],
+            W1 = tf.get_variable("W1", shape=[58, 100],
                                  initializer=tf.contrib.layers.xavier_initializer())
             b1 = tf.Variable(tf.random_normal([100]))
             L1 = selu(tf.matmul(self.X, W1) + b1)
@@ -111,9 +111,8 @@ class Model:
         self.optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(self.cost)
 
         # Test model and check accuracy
-        correct_prediction = tf.equal(
-            tf.argmax(self.hypothesis, 1), tf.argmax(self.Y, 1))
-        self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        predicted = tf.cast(self.hypothesis > 0.5, dtype=tf.float32)
+        self.accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted, self.Y), dtype=tf.float32))
 
     def predict(self, x_test, keep_prop=1.0):
         return self.sess.run(self.hypothesis, feed_dict={self.X: x_test, self.keep_prob: keep_prop})
@@ -138,8 +137,8 @@ class Runner:
         model.get_sess.run(tf.global_variables_initializer())
         for epoch in range(TRAINING_EPOCHS):
             c, _ = model.train(x_train, y_train)
-
-            print ('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.9f}'.format(c))
+            if epoch % 100 == 0:
+            	print ('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.9f}'.format(c))
 
         #TODO: Save frozen graph of the tf after training. 
         #Refer to: https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc

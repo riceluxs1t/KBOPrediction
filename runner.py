@@ -39,10 +39,12 @@ def format(data):
 	for k1, v1 in data['score_board']['summary'].items():
 		if k1 == 'home':
 			for k2, v2 in v1.items():
-				home.append(v2)
+				if k2 != 'r':
+					home.append(v2)
 		else:
 			for k2, v2 in v1.items():
-				away.append(v2)
+				if k2 != 'r':
+					away.append(v2)
 
 	for k1, v1 in data['pitcher_info'].items():
 		if k1 == 'home':
