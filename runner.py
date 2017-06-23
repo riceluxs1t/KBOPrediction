@@ -30,11 +30,12 @@ Formats the data into x_val and y_val
 def format(data):
 	home = []
 	away = []
-	winner = [0] # Winner : 1 if home 0 if away
+	# winner = [0] # Winner : 1 if home 0 if away
+	winner = [data['score_board']['summary']['home']['r']] # Home team's score
 
 	# Get the winner
-	if data['score_board']['summary']['home']['r'] > data['score_board']['summary']['away']['r']:
-		winner[0] = 1
+	# if data['score_board']['summary']['home']['r'] > data['score_board']['summary']['away']['r']:
+	# 	winner[0] = 1
 
 	for k1, v1 in data['score_board']['summary'].items():
 		if k1 == 'home':
@@ -124,7 +125,7 @@ kbo_runner.train_run(kbo_pred_model, trainX, trainY)
 ## ======== Run test =========
 accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
 
-print("Model Accuracy: ")
+print("Model Average Off Value: ")
 print(accuracy)
 
 

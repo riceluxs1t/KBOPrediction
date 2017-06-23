@@ -107,12 +107,13 @@ class Model:
             self.hypothesis = tf.matmul(L3, W4) + b4 # Probability of winning
 
         # define cost/loss & optimizer
-        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO: Need to find a more suiting convex function.
+        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO: Need to find a better cost func.
         self.optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(self.cost)
 
         # Test model and check accuracy
-        predicted = tf.cast(self.hypothesis > 0.5, dtype=tf.float32)
-        self.accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted, self.Y), dtype=tf.float32))
+        # predicted = tf.cast(self.hypothesis > 0.5, dtype=tf.float32)
+        # self.accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted, self.Y), dtype=tf.float32))
+        self.accuracy = tf.reduce_mean(tf.abs(self.hypothesis - self.Y))
 
     def predict(self, x_test, keep_prop=1.0):
         return self.sess.run(self.hypothesis, feed_dict={self.X: x_test, self.keep_prob: keep_prop})
