@@ -19,3 +19,6 @@ tornado==4.5.1
 traitlets==4.3.2
 urllib3==1.21.1
 wcwidth==0.1.7
+matplotlib==2.0.0
+numpy==1.12.1
+tensorflow==1.0.0
