@@ -96,37 +96,39 @@ def format(data):
 # print(away)
 # print(y)
 
+
 """
 Create data set and divide into test data set & train data set
 """
-dataX = []
-dataY = []
+if __name__ == '__main__':
+	dataX = []
+	dataY = []
 
-for i in range(len(data)):
-	# Put home team data
-	x_val, y_val = format(data[i])
-	dataX.append(x_val)
-	dataY.append(y_val)
+	for i in range(len(data)):
+		# Put home team data
+		x_val, y_val = format(data[i])
+		dataX.append(x_val)
+		dataY.append(y_val)
 
-train_size = int(len(dataY) * 0.7)
-test_size = len(dataY) - train_size
-trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
-testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
+	train_size = int(len(dataY) * 0.7)
+	test_size = len(dataY) - train_size
+	trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
+	testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
 
-## ======== Build model ======
-sess = tf.Session()
-kbo_pred_model = Model(sess, "Model1")
+	## ======== Build model ======
+	sess = tf.Session()
+	kbo_pred_model = Model(sess, "Model1", learn_rate=0.001)
 
-## ======== Train model ======
-kbo_runner = Runner()
-kbo_runner.train_run(kbo_pred_model, trainX, trainY)
+	## ======== Train model ======
+	kbo_runner = Runner()
+	kbo_runner.train_run(kbo_pred_model, trainX, trainY, training_epoch=2000, keep_prob=0.7)
 
 
-## ======== Run test =========
-accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
+	## ======== Run test =========
+	accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
 
-print("Model Average Off Value: ")
-print(accuracy)
+	print("Model Average Off Value: ")
+	print(accuracy)
 
 
 

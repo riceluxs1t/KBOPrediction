@@ -16,15 +16,13 @@ from constants import *
 
 def selu(x):
     with ops.name_scope('elu') as scope:
-        alpha = 1.6732632423543772848170429916717
-        scale = 1.0507009873554804934193349852946
-        return scale*tf.where(x>=0.0, x, alpha*tf.nn.elu(x))
+        return SCALE * tf.where(x>=0.0, x, ALPHA * tf.nn.elu(x))
 
 
 def dropout_selu(
     x, 
     keep_prob, 
-    alpha= -1.7580993408473766, 
+    alpha= DROP_ALPHA, 
     fixedPointMean=0.0, 
     fixedPointVar=1.0, 
     noise_shape=None, 
@@ -68,12 +66,12 @@ def dropout_selu(
 
 class Model:
 
-    def __init__(self, sess, name):
+    def __init__(self, sess, name, learn_rate):
         self.sess = sess
         self.name = name
-        self._build_net()
+        self._build_net(learn_rate)
 
-    def _build_net(self):
+    def _build_net(self, learn_rate):
         with tf.variable_scope(self.name):
             # input place holders
             self.X = tf.placeholder(tf.float32, [None, 58])
@@ -107,8 +105,9 @@ class Model:
             self.hypothesis = tf.matmul(L3, W4) + b4 # Probability of winning
 
         # define cost/loss & optimizer
-        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO: Need to find a better cost func.
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(self.cost)
+        # self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO: Need to find a better cost func.
+        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y))
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=learn_rate).minimize(self.cost)
 
         # Test model and check accuracy
         # predicted = tf.cast(self.hypothesis > 0.5, dtype=tf.float32)
@@ -121,7 +120,7 @@ class Model:
     def get_accuracy(self, x_test, y_test, keep_prop=1.0):
         return self.sess.run(self.accuracy, feed_dict={self.X: x_test, self.Y: y_test, self.keep_prob: keep_prop})
 
-    def train(self, x_data, y_data, keep_prop=KEEP_RATE):
+    def train(self, x_data, y_data, keep_prop):
         return self.sess.run([self.cost, self.optimizer], feed_dict={
             self.X: x_data, self.Y: y_data, self.keep_prob: keep_prop})
     
@@ -134,12 +133,12 @@ class Runner:
     def __init__(self):
         tf.set_random_seed(777)  # reproducibility
 
-    def train_run(self, model, x_train, y_train):
+    def train_run(self, model, x_train, y_train, training_epoch, keep_prob):
         model.get_sess.run(tf.global_variables_initializer())
-        for epoch in range(TRAINING_EPOCHS):
-            c, _ = model.train(x_train, y_train)
+        for epoch in range(training_epoch):
+            c, _ = model.train(x_train, y_train, keep_prob)
             if epoch % 100 == 0:
-            	print ('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.9f}'.format(c))
+            	print ('Epoch:', '%04d' % (epoch), 'cost =', '{:.9f}'.format(c))
 
         #TODO: Save frozen graph of the tf after training. 
         #Refer to: https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc
