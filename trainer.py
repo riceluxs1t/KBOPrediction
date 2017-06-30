@@ -1,26 +1,21 @@
 """
 This is a runner for KBO Prediction.
 """
-import json
 import os
 import sys
+import argparse
+import json
 import tensorflow as tf
 import numpy as np
+
+from elasticsearch import Elasticsearch
+
 from model import Model
 from model import Runner
 from constants import *
 
 
 DIRNAME = os.path.split(os.path.abspath(sys.argv[0]))[0]
-
-## ====== Create data set from 2017 data =====
-
-"""
-Call JSON file
-"""
-f = open(DIRNAME + "/" + DATA_17, 'r')
-print("Load JSON data")
-data = json.load(f)
 
 """
 Formats the data into x_val and y_val
@@ -97,10 +92,23 @@ def format(data):
 # print(y)
 
 
-"""
-Create data set and divide into test data set & train data set
-"""
+parser = argparse.ArgumentParser(description='KBO Score Prediction SELU NN')
+
+parser.add_argument('file_name', type=str, help='The data file (must be in the same directory')
+parser.add_argument('model_name', type=str, help='The name of the model')
+parser.add_argument('learn_rate', type=float, help='The learning rate')
+parser.add_argument('epoch', type=int, help='Training epoch')
+parser.add_argument('drop_rate', type=float, help='Drop rate')
+
 if __name__ == '__main__':
+	args = parser.parse_args()
+	"""
+	Create data set and divide into test data set & train data set
+	"""
+	f = open(DIRNAME + "/" + args.file_name, 'r')
+	print("Load JSON data")
+	data = json.load(f)
+
 	dataX = []
 	dataY = []
 
@@ -110,28 +118,37 @@ if __name__ == '__main__':
 		dataX.append(x_val)
 		dataY.append(y_val)
 
-	train_size = int(len(dataY) * 0.7)
-	test_size = len(dataY) - train_size
-	trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
-	testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
+	# train_size = int(len(dataY) * 0.7)
+	# test_size = len(dataY) - train_size
+	# trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
+	# testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
 
 	## ======== Build model ======
-	sess = tf.Session()
-	kbo_pred_model = Model(sess, "Model1", learn_rate=0.001)
+	with tf.Session() as sess:
+		kbo_pred_model = Model(
+			sess, 
+			args.model_name, 
+			learn_rate=args.learn_rate
+		)
 
-	## ======== Train model ======
-	kbo_runner = Runner()
-	kbo_runner.train_run(kbo_pred_model, trainX, trainY, training_epoch=2000, keep_prob=0.7)
+		## ======== Train model ======
+		kbo_runner = Runner()
+		# kbo_runner.train_run(kbo_pred_model, trainX, trainY, training_epoch=2000, keep_prob=0.7)
+		kbo_runner.train_run(
+			kbo_pred_model, 
+			dataX, 
+			dataY,
+			training_epoch=args.epoch, 
+			keep_prob=(1 - args.drop_rate)
+		)
 
+		#TODO Freeze the tf graph created here.
 
 	## ======== Run test =========
-	accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
+	# accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
 
-	print("Model Average Off Value: ")
-	print(accuracy)
-
-
-
+	# print("Model Average Off Value: ")
+	# print(accuracy)
 
 
 
