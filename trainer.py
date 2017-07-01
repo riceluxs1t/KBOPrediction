@@ -11,7 +11,7 @@ from model import Runner
 from constants import *
 
 
-DIRNAME = os.path.split(os.path.abspath(sys.argv[0]))[0]
+DIRNAME = os.path.dirname(os.path.realpath(__file__))
 
 """
 Formats the data into x_val and y_val
@@ -157,7 +157,9 @@ if __name__ == '__main__':
 		## ======= Save the trained model ======
 		print("Saving the trained model...")
 		saver = tf.train.Saver()
-		saver.save(sess, DIRNAME + '/saved_graphs/' + args.model_name + '_graph.chkp')
+		if not os.path.exists(DIRNAME + '/saved_graphs'):
+			os.makedirs(DIRNAME + '/saved_graphs')
+		saver.save(sess, DIRNAME + '/saved_graphs/' + args.model_name + '.chkp')
 		print("Saved")
 
 
