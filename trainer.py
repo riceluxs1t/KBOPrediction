@@ -1,6 +1,3 @@
-"""
-This is a runner for KBO Prediction.
-"""
 import os
 import sys
 import argparse
@@ -8,93 +5,19 @@ import json
 import tensorflow as tf
 import numpy as np
 
-from elasticsearch import Elasticsearch
-
-from model import Model
-from model import Runner
+from builder import SeLuModel
+from builder import Runner
 from constants import *
+# from formatter import create_data
+from formatter import format
 
 
-DIRNAME = os.path.split(os.path.abspath(sys.argv[0]))[0]
+DIRNAME = os.path.dirname(os.path.realpath(__file__))
 
-"""
-Formats the data into x_val and y_val
-@param JSON value
-@returns x_val, y_val
-"""
-def format(data):
-	home = []
-	away = []
-	# winner = [0] # Winner : 1 if home 0 if away
-	winner = [data['score_board']['summary']['home']['r']] # Home team's score
-
-	# Get the winner
-	# if data['score_board']['summary']['home']['r'] > data['score_board']['summary']['away']['r']:
-	# 	winner[0] = 1
-
-	for k1, v1 in data['score_board']['summary'].items():
-		if k1 == 'home':
-			for k2, v2 in v1.items():
-				if k2 != 'r':
-					home.append(v2)
-		else:
-			for k2, v2 in v1.items():
-				if k2 != 'r':
-					away.append(v2)
-
-	for k1, v1 in data['pitcher_info'].items():
-		if k1 == 'home':
-			for k2, v2 in v1[0].items():
-				if k2 != 'name':
-					if k2 == 'era':
-						home.append(float(v2))
-					else:	
-						home.append(v2)
-		else:
-			for k2, v2 in v1[0].items():
-				if k2 != 'name':
-					if k2 == 'era':
-						away.append(float(v2))
-					else:	
-						away.append(v2)
-
-	for k1, v1 in data['batter_info'].items():
-			if k1 == 'home':
-				for k2, v2 in v1[0].items():
-					if k2 != 'name':
-						if k2 == 'hra':
-							home.append(float(v2))
-						else:
-							home.append(v2)
-			else:
-				for k2, v2 in v1[0].items():
-					if k2 != 'name':
-						if k2 == 'hra':
-							away.append(float(v2))
-						else:
-							away.append(v2)
-
-	for k1, v1 in data['away_team_standing'].items():
-		if k1 != 'name':
-			away.append(v1)
-
-	for k1, v1 in data['home_team_standing'].items():
-		if k1 != 'name':
-			home.append(v1)
-
-	return home + away, winner
-
-
-# home, away, y = format(data[0])
-# print(len(home), len(away))
-# print(home)
-# print(away)
-# print(y)
-
-
-parser = argparse.ArgumentParser(description='KBO Score Prediction SELU NN')
+parser = argparse.ArgumentParser(description='KBO Score Prediction Trainer')
 
 parser.add_argument('file_name', type=str, help='The data file (must be in the same directory')
+parser.add_argument('train_size', type=float, help='The proportion of the training set to the test set')
 parser.add_argument('model_name', type=str, help='The name of the model')
 parser.add_argument('learn_rate', type=float, help='The learning rate')
 parser.add_argument('epoch', type=int, help='Training epoch')
@@ -109,46 +32,39 @@ if __name__ == '__main__':
 	print("Load JSON data")
 	data = json.load(f)
 
-	dataX = []
-	dataY = []
-
-	for i in range(len(data)):
-		# Put home team data
-		x_val, y_val = format(data[i])
-		dataX.append(x_val)
-		dataY.append(y_val)
-
-	# train_size = int(len(dataY) * 0.7)
-	# test_size = len(dataY) - train_size
-	# trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
-	# testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
+	trainX, trainY, testX, testY = create_data(data, args.train_size) #TODO
 
 	## ======== Build model ======
 	with tf.Session() as sess:
-		kbo_pred_model = Model(
+		kbo_pred_model = SeLuModel(
 			sess, 
 			args.model_name, 
 			learn_rate=args.learn_rate
 		)
+		
 
 		## ======== Train model ======
+		print("Started the training...")
 		kbo_runner = Runner()
-		# kbo_runner.train_run(kbo_pred_model, trainX, trainY, training_epoch=2000, keep_prob=0.7)
 		kbo_runner.train_run(
 			kbo_pred_model, 
-			dataX, 
-			dataY,
+			trainX, 
+			trainY,
 			training_epoch=args.epoch, 
 			keep_prob=(1 - args.drop_rate)
 		)
 
-		#TODO Freeze the tf graph created here.
+		## ======== Run test =========
+		accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
 
-	## ======== Run test =========
-	# accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
+		print("Model Average Error: ")
+		print(accuracy)
 
-	# print("Model Average Off Value: ")
-	# print(accuracy)
+		## ======= Save the trained model ======
+		print("Saving the trained model...")
+		kbo_pred_model.save()
+		print("Save complete.")
+
 
 
 
