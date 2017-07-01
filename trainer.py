@@ -151,13 +151,13 @@ if __name__ == '__main__':
 		## ======== Run test =========
 		accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
 
-		print("Model Average Off Value: ")
+		print("Model Average Error: ")
 		print(accuracy)
 
 		## ======= Save the trained model ======
 		print("Saving the trained model...")
 		saver = tf.train.Saver()
-		saver.save(sess, DIRNAME + '/graphs/' + args.model_name + 'graph.chkp')
+		saver.save(sess, DIRNAME + '/saved_graphs/' + args.model_name + '_graph.chkp')
 		print("Saved")
 
 
