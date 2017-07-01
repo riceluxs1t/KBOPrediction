@@ -491,7 +491,7 @@ class MatchDetail(object):
         return json.dumps(self.__dict__)
 
 
-class GameIDFacotry2016(object):
+class GameIDFactory2016(object):
     """Given year, month, day, home_team_name, away_team_name, constructs the corresponding
     gameID used to go to the Naver Sports page. Works for years >= 2016.
     """
