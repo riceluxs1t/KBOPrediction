@@ -201,7 +201,7 @@ class Runner:
         model.get_sess.run(tf.global_variables_initializer())
         for epoch in range(training_epoch):
             c, _ = model.train(x_train, y_train, keep_prob)
-            if epoch % 100 == 0:
+            if epoch % 1000 == 0:
             	print ('Epoch:', '%04d' % (epoch), 'cost =', '{:.9f}'.format(c))
 
         #TODO: Save frozen graph of the tf after training. 

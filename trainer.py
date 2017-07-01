@@ -1,6 +1,3 @@
-"""
-This is a runner for KBO Prediction.
-"""
 import os
 import sys
 import argparse
@@ -91,9 +88,10 @@ def format(data):
 # print(y)
 
 
-parser = argparse.ArgumentParser(description='KBO Score Prediction SELU NN Trainer')
+parser = argparse.ArgumentParser(description='KBO Score Prediction Trainer')
 
 parser.add_argument('file_name', type=str, help='The data file (must be in the same directory')
+parser.add_argument('train_size', type=float, help='The proportion of the training set to the test set')
 parser.add_argument('model_name', type=str, help='The name of the model')
 parser.add_argument('learn_rate', type=float, help='The learning rate')
 parser.add_argument('epoch', type=int, help='Training epoch')
@@ -118,10 +116,10 @@ if __name__ == '__main__':
 		dataX.append(x_val)
 		dataY.append(y_val)
 
-	# train_size = int(len(dataY) * 0.7)
-	# test_size = len(dataY) - train_size
-	# trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
-	# testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
+	train_size = int(len(dataY) * args.train_size)
+	test_size = len(dataY) - train_size
+	trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
+	testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
 
 	## ======== Build model ======
 	with tf.Session() as sess:
@@ -140,19 +138,27 @@ if __name__ == '__main__':
 			)
 
 		## ======== Train model ======
+		print("Started the training...")
 		kbo_runner = Runner()
-		# kbo_runner.train_run(kbo_pred_model, trainX, trainY, training_epoch=2000, keep_prob=0.7)
 		kbo_runner.train_run(
 			kbo_pred_model, 
-			dataX, 
-			dataY,
+			trainX, 
+			trainY,
 			training_epoch=args.epoch, 
 			keep_prob=(1 - args.drop_rate)
 		)
 
+		## ======== Run test =========
+		accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
+
+		print("Model Average Off Value: ")
+		print(accuracy)
+
 		## ======= Save the trained model ======
+		print("Saving the trained model...")
 		saver = tf.train.Saver()
-		saver.save(sess, DIRNAME + '/' + args.model_name + 'graph.chkp')
+		saver.save(sess, DIRNAME + '/graphs/' + args.model_name + 'graph.chkp')
+		print("Saved")
 
 
 
