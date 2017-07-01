@@ -289,15 +289,24 @@ class MatchDetailParser(object):
         self.day = day
         self.home_team_name = self.TEAM_NAME_MAPPING.get(home_team_name, home_team_name)
         self.away_team_name = self.TEAM_NAME_MAPPING.get(away_team_name, away_team_name)
-        self.game_id = '{0}{1}{2}{3}{4}0{0}'.format(
-            self.year,
-            self.month,
-            self.day,
-            self.away_team_name,
-            self.home_team_name,
-        )
+        if int(year) >= 2016:
+            self.game_id_factory = GameIDFacotry2016(
+                self.year,
+                self.month,
+                self.day,
+                self.away_team_name,
+                self.home_team_name,
+            )
+        else:
+            self.game_id_factory = GameIDFactory2009(
+                self.year,
+                self.month,
+                self.day,
+                self.away_team_name,
+                self.home_team_name,
+            )
 
-    def _get_raw_page(self):
+    def _get_raw_page(self, game_id):
         """ Returns the raw data on some target page. The NaverSports game result page is used to
         get the raw data.
 
@@ -306,9 +315,8 @@ class MatchDetailParser(object):
         """
         payload = {
             'category': 'kbo',
-            'gameId': self.game_id
+            'gameId': game_id
         }
-        print(self.game_id)
         return requests.get(self.URL, params=payload).text
 
     def _parse_source_script_that_has_data(self):
@@ -320,7 +328,7 @@ class MatchDetailParser(object):
         using some keyword and then extracts out the json formatted data by some
         custom string processing.
         """
-        tree = BeautifulSoup(self._get_raw_page(), "html.parser")
+        tree = BeautifulSoup(self._get_raw_page(self.game_id_factory.make()), "html.parser")
         scripts = tree.find_all("script")
 
         # Note that the logic sadly relies on these two magic keywords positions.
@@ -333,6 +341,7 @@ class MatchDetailParser(object):
                 data_script = str(script)
                 break
 
+        # This will most likely be a double header game.
         if data_script is None:
             raise DetailDataNotFoundException()
 
@@ -480,3 +489,59 @@ class MatchDetail(object):
 
     def to_json(self):
         return json.dumps(self.__dict__)
+
+
+class GameIDFacotry2016(object):
+    """Given year, month, day, home_team_name, away_team_name, constructs the corresponding
+    gameID used to go to the Naver Sports page. Works for years >= 2016.
+    """
+    def __init__(
+        self,
+        year,
+        month,
+        day,
+        away_team_name,
+        home_team_name
+    ):
+        self.year = year
+        self.month = month
+        self.day = day
+        self.away_team_name = away_team_name
+        self.home_team_name = home_team_name
+
+    def make(self):
+        return '{0}{1}{2}{3}{4}0{0}'.format(
+            self.year,
+            self.month,
+            self.day,
+            self.away_team_name,
+            self.home_team_name,
+        )
+
+
+class GameIDFactory2009(object):
+    """Given year, month, day, home_team_name, away_team_name, constructs the corresponding
+    gameID used to go to the Naver Sports page. Works for years >= 2009 and years < 2016.
+    """
+    def __init__(
+            self,
+            year,
+            month,
+            day,
+            away_team_name,
+            home_team_name
+    ):
+        self.year = year
+        self.month = month
+        self.day = day
+        self.away_team_name = away_team_name
+        self.home_team_name = home_team_name
+
+    def make(self):
+        return '{0}{1}{2}{3}{4}0'.format(
+            self.year,
+            self.month,
+            self.day,
+            self.away_team_name,
+            self.home_team_name,
+        )
