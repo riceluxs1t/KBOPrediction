@@ -64,7 +64,7 @@ def dropout_selu(
                                 lambda: dropout_selu_impl(x, keep_prob, alpha, noise_shape, seed, name),
                                 lambda: array_ops.identity(x))
 
-class Model:
+class SeLuModel:
 
     def __init__(self, sess, name, learn_rate):
         self.sess = sess
@@ -98,6 +98,70 @@ class Model:
             b3 = tf.Variable(tf.random_normal([50]))
             L3 = selu(tf.matmul(L2, W3) + b3)
             L3 = dropout_selu(L3, keep_prob=self.keep_prob)
+
+            W4 = tf.get_variable("W4", shape=[50, 1],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b4 = tf.Variable(tf.random_normal([1]))
+            self.hypothesis = tf.matmul(L3, W4) + b4 # Probability of winning
+
+        # define cost/loss & optimizer
+        # self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO: Need to find a better cost func.
+        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y))
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=learn_rate).minimize(self.cost)
+
+        # Test model and check accuracy
+        # predicted = tf.cast(self.hypothesis > 0.5, dtype=tf.float32)
+        # self.accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted, self.Y), dtype=tf.float32))
+        self.accuracy = tf.reduce_mean(tf.abs(self.hypothesis - self.Y))
+
+    def predict(self, x_test, keep_prop=1.0):
+        return self.sess.run(self.hypothesis, feed_dict={self.X: x_test, self.keep_prob: keep_prop})
+
+    def get_accuracy(self, x_test, y_test, keep_prop=1.0):
+        return self.sess.run(self.accuracy, feed_dict={self.X: x_test, self.Y: y_test, self.keep_prob: keep_prop})
+
+    def train(self, x_data, y_data, keep_prop):
+        return self.sess.run([self.cost, self.optimizer], feed_dict={
+            self.X: x_data, self.Y: y_data, self.keep_prob: keep_prop})
+    
+    @property
+    def get_sess(self):
+        return self.sess
+
+class ReLuModel:
+
+    def __init__(self, sess, name, learn_rate):
+        self.sess = sess
+        self.name = name
+        self._build_net(learn_rate)
+
+    def _build_net(self, learn_rate):
+        with tf.variable_scope(self.name):
+            # input place holders
+            self.X = tf.placeholder(tf.float32, [None, 58])
+            self.Y = tf.placeholder(tf.float32, [None, 1]) # Win : 1 Lose : 0
+
+            # dropout (keep_prob) rate  0.7 on training, but should be 1 for testing
+            self.keep_prob = tf.placeholder(tf.float32)
+
+            # weights & bias for nn layers
+            W1 = tf.get_variable("W1", shape=[58, 100],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b1 = tf.Variable(tf.random_normal([100]))
+            L1 = tf.nn.relu(tf.matmul(self.X, W1) + b1)
+            L1 = tf.nn.dropout(L1, keep_prob=self.keep_prob)
+
+            W2 = tf.get_variable("W2", shape=[100, 100],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b2 = tf.Variable(tf.random_normal([100]))
+            L2 = tf.nn.relu(tf.matmul(L1, W2) + b2)
+            L2 = tf.nn.dropout(L2, keep_prob=self.keep_prob)
+
+            W3 = tf.get_variable("W3", shape=[100, 50],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b3 = tf.Variable(tf.random_normal([50]))
+            L3 = tf.nn.relu(tf.matmul(L2, W3) + b3)
+            L3 = tf.nn.dropout(L3, keep_prob=self.keep_prob)
 
             W4 = tf.get_variable("W4", shape=[50, 1],
                                  initializer=tf.contrib.layers.xavier_initializer())

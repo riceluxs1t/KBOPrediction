@@ -8,9 +8,8 @@ import json
 import tensorflow as tf
 import numpy as np
 
-from elasticsearch import Elasticsearch
-
-from model import Model
+from model import SeLuModel
+from model import ReLuModel
 from model import Runner
 from constants import *
 
@@ -92,13 +91,14 @@ def format(data):
 # print(y)
 
 
-parser = argparse.ArgumentParser(description='KBO Score Prediction SELU NN')
+parser = argparse.ArgumentParser(description='KBO Score Prediction SELU NN Trainer')
 
 parser.add_argument('file_name', type=str, help='The data file (must be in the same directory')
 parser.add_argument('model_name', type=str, help='The name of the model')
 parser.add_argument('learn_rate', type=float, help='The learning rate')
 parser.add_argument('epoch', type=int, help='Training epoch')
 parser.add_argument('drop_rate', type=float, help='Drop rate')
+parser.add_argument('-s', '--selu', action="store_true", help='Detemine whether to use SeLU')
 
 if __name__ == '__main__':
 	args = parser.parse_args()
@@ -125,11 +125,19 @@ if __name__ == '__main__':
 
 	## ======== Build model ======
 	with tf.Session() as sess:
-		kbo_pred_model = Model(
-			sess, 
-			args.model_name, 
-			learn_rate=args.learn_rate
-		)
+		kbo_pred_model = None
+		if args.selu:
+			kbo_pred_model = SeLuModel(
+				sess, 
+				args.model_name, 
+				learn_rate=args.learn_rate
+			)
+		else:
+			kbo_pred_model = ReLuModel(
+				sess, 
+				args.model_name, 
+				learn_rate=args.learn_rate
+			)
 
 		## ======== Train model ======
 		kbo_runner = Runner()
@@ -142,13 +150,10 @@ if __name__ == '__main__':
 			keep_prob=(1 - args.drop_rate)
 		)
 
-		#TODO Freeze the tf graph created here.
+		## ======= Save the trained model ======
+		saver = tf.train.Saver()
+		saver.save(sess, DIRNAME + '/' + args.model_name + 'graph.chkp')
 
-	## ======== Run test =========
-	# accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
-
-	# print("Model Average Off Value: ")
-	# print(accuracy)
 
 
 
