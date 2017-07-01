@@ -289,22 +289,13 @@ class MatchDetailParser(object):
         self.day = day
         self.home_team_name = self.TEAM_NAME_MAPPING.get(home_team_name, home_team_name)
         self.away_team_name = self.TEAM_NAME_MAPPING.get(away_team_name, away_team_name)
-        if int(year) >= 2016:
-            self.game_id_factory = GameIDFacotry2016(
-                self.year,
-                self.month,
-                self.day,
-                self.away_team_name,
-                self.home_team_name,
-            )
-        else:
-            self.game_id_factory = GameIDFactory2009(
-                self.year,
-                self.month,
-                self.day,
-                self.away_team_name,
-                self.home_team_name,
-            )
+        self.game_id_factory = GameIDFactory(
+            self.year,
+            self.month,
+            self.day,
+            self.away_team_name,
+            self.home_team_name,
+        )
 
     def _get_raw_page(self, game_id):
         """ Returns the raw data on some target page. The NaverSports game result page is used to
@@ -491,9 +482,9 @@ class MatchDetail(object):
         return json.dumps(self.__dict__)
 
 
-class GameIDFacotry2016(object):
+class GameIDFactory(object):
     """Given year, month, day, home_team_name, away_team_name, constructs the corresponding
-    gameID used to go to the Naver Sports page. Works for years >= 2016.
+    gameID used to go to the Naver Sports page.
     """
     def __init__(
         self,
@@ -510,38 +501,19 @@ class GameIDFacotry2016(object):
         self.home_team_name = home_team_name
 
     def make(self):
-        return '{0}{1}{2}{3}{4}0{0}'.format(
-            self.year,
-            self.month,
-            self.day,
-            self.away_team_name,
-            self.home_team_name,
-        )
-
-
-class GameIDFactory2009(object):
-    """Given year, month, day, home_team_name, away_team_name, constructs the corresponding
-    gameID used to go to the Naver Sports page. Works for years >= 2009 and years < 2016.
-    """
-    def __init__(
-            self,
-            year,
-            month,
-            day,
-            away_team_name,
-            home_team_name
-    ):
-        self.year = year
-        self.month = month
-        self.day = day
-        self.away_team_name = away_team_name
-        self.home_team_name = home_team_name
-
-    def make(self):
-        return '{0}{1}{2}{3}{4}0'.format(
-            self.year,
-            self.month,
-            self.day,
-            self.away_team_name,
-            self.home_team_name,
-        )
+        if int(self.year) >= 2016:
+            return '{0}{1}{2}{3}{4}0{0}'.format(
+                self.year,
+                self.month,
+                self.day,
+                self.away_team_name,
+                self.home_team_name,
+            )
+        else:
+            return '{0}{1}{2}{3}{4}0'.format(
+                self.year,
+                self.month,
+                self.day,
+                self.away_team_name,
+                self.home_team_name,
+            )
