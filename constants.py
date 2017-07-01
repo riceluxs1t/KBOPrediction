@@ -31,3 +31,12 @@ STADIUM_NAMES = {
     '고척': 'GoChuk',
     '수원': 'SuWon'
 }
+
+## NN paramters
+LEARNING_RATE = 0.001
+TRAINING_EPOCHS = 2000
+KEEP_RATE = 0.7
+
+## Data location
+DATA_17 = "2017_data.txt"
+DATA_16 = "2016_data.txt"
