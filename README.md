@@ -5,23 +5,27 @@ Uses python3.6
 In order to obtain the entire 2017 KBO baseball data, simply run the following.
 ```python
 from scrape import *
-year = '2017'
-months = ['03', '04', '05', '06']
+year = '2015'
+months = ['03', '04', '05', '06', '07', '08', '09', '10']
 summaries = []
 for month in months:
     summaries += MatchSummaryParser(year, month).parse()
 
 matches = []
 for summary in summaries:
-    matches.append(
-        MatchDetailParser(
-            summary.year,
-            summary.month,
-            summary.day,
-            summary.get_away_team_name(),
-            summary.get_home_team_name()
-        ).parse()
-    )
+    try:
+        matches.append(
+            MatchDetailParser(
+                summary.year,
+                summary.month,
+                summary.day,
+                summary.get_away_team_name(),
+                summary.get_home_team_name()
+            ).parse()
+        )
+    except DetailDataNotFoundException:
+        # this is most likely a double header game.
+        pass
 ```
 
 ## Baseball Terms Explained
