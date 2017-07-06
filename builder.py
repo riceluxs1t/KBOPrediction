@@ -167,7 +167,7 @@ class ReLuModel:
                                  initializer=tf.contrib.layers.xavier_initializer())
             b4 = tf.Variable(tf.random_normal([1]))
             self.hypothesis = tf.matmul(L3, W4) + b4 # Probability of winning
-
+            
         # define cost/loss & optimizer
         # self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO: Need to find a better cost func.
         self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y))

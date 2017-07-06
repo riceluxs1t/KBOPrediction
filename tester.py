@@ -20,13 +20,19 @@ parser.add_argument('away_team', type=int, help='The away team id')
 if __name__ == '__main__':
 	args = parser.parse_args()
 
-	#Call the model.
-	saver = tf.train.import_meta_graph(DIRNAME + args.model_name + '.chkp.meta')
-
-	#Access the graph.
-	graph = tf.get_default_graph()
-
 	with tf.Session() as sess:
-	    # To initialize values with saved data
-	    saver.restore(sess, DIRNAME + args.model_name + '.ckpt.data-00000-of-00001')
+		#Call the model.
+		saver = tf.train.import_meta_graph(DIRNAME + args.model_name + '.meta')
+		# To initialize values with saved data
+		saver.restore(sess, args.model_name)
+		#Access the graph.
+		graph = tf.get_default_graph()
+
+	   
 	    # print(sess.run(global_step_tensor)) # returns 1000
+
+		all_vars = tf.get_collection('vars')
+		for v in all_vars:
+			v_ = sess.run(v)
+			print(v_)
+
