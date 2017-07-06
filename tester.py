@@ -7,13 +7,16 @@ import os
 import argparse
 import tensorflow as tf
 
+from builder import SeLuModel
+
 DIRNAME = os.path.dirname(os.path.realpath(__file__)) + '/saved_graphs/'
 
+ex = [[1 for i in range(58)]]
 
 
 parser = argparse.ArgumentParser(description='KBO Score Prediction Tester')
 
-parser.add_argument('model_name', type=str, help='The trained model to use for prediction')
+parser.add_argument('model_name', type=str, help='The pretrained model to use')
 parser.add_argument('home_team', type=int, help='The home team id')
 parser.add_argument('away_team', type=int, help='The away team id')
 
@@ -21,18 +24,12 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	with tf.Session() as sess:
-		#Call the model.
-		saver = tf.train.import_meta_graph(DIRNAME + args.model_name + '.meta')
-		# To initialize values with saved data
-		saver.restore(sess, args.model_name)
-		#Access the graph.
-		graph = tf.get_default_graph()
+		kbo_pred_model = SeLuModel(
+			sess, 
+			args.model_name, 
+			learn_rate=0
+		)
 
-	   
-	    # print(sess.run(global_step_tensor)) # returns 1000
+		y = kbo_pred_model.predict(ex)
 
-		all_vars = tf.get_collection('vars')
-		for v in all_vars:
-			v_ = sess.run(v)
-			print(v_)
-
+		print(y)

@@ -56,8 +56,8 @@ def format(data):
 	away = []
 	# winner = [0] # Winner : 1 if home 0 if away
 	result = [
-		data['score_board']['summary']['home']['r'], 
-		data['score_board']['summary']['away']['r']
+		data['score_board']['summary']['home']['r']
+		# data['score_board']['summary']['away']['r']
 	] # Home team's score
 
 	# Get the winner
