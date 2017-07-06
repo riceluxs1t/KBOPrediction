@@ -11,8 +11,6 @@ from builder import SeLuModel
 
 DIRNAME = os.path.dirname(os.path.realpath(__file__)) + '/saved_graphs/'
 
-ex = [[1 for i in range(58)]]
-
 
 parser = argparse.ArgumentParser(description='KBO Score Prediction Tester')
 
@@ -30,6 +28,12 @@ if __name__ == '__main__':
 			learn_rate=0
 		)
 
-		y = kbo_pred_model.predict(ex)
+		# Call data
+		# home = get_team(args.home_team)
+		# away = get_team(args.home_team)
+		# Concat home & away
+		# home_r, away_r = kbo_pred_model.predict([home + away])
 
-		print(y)
+		print("Prediction :")
+		print("Home :", home_r)
+		print("Away :", away_r)

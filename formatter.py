@@ -29,7 +29,7 @@ TEAM_HIST = {}
 # trainY, testY = np.array(dataY[0:train_size]), np.array(
 #     dataY[train_size:len(dataY)])
 
-def create_data(data):
+def create_data(data, train_prop):
 	dataX = []
 	dataY = []
 
@@ -39,7 +39,7 @@ def create_data(data):
 		dataX.append(x_val)
 		dataY.append(y_val)
 
-	train_size = int(len(dataY) * args.train_size)
+	train_size = int(len(dataY) * train_prop)
 	test_size = len(dataY) - train_size
 	trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
 	testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])

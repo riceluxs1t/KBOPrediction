@@ -32,20 +32,7 @@ if __name__ == '__main__':
 	print("Load JSON data")
 	data = json.load(f)
 
-	# create_data(data) #TODO
-	dataX = []
-	dataY = []
-
-	for i in range(len(data)):
-		# Put home team data
-		x_val, y_val = format(data[i])
-		dataX.append(x_val)
-		dataY.append(y_val)
-
-	train_size = int(len(dataY) * args.train_size)
-	test_size = len(dataY) - train_size
-	trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
-	testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
+	trainX, trainY, testX, testY = create_data(data, args.train_size) #TODO
 
 	## ======== Build model ======
 	with tf.Session() as sess:
