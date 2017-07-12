@@ -78,7 +78,7 @@ class SeLuModel:
         with tf.variable_scope(self.name):
             # input place holders
             self.X = tf.placeholder(tf.float32, [None, 58])
-            self.Y = tf.placeholder(tf.float32, [None, 1]) # Win : 1 Lose : 0
+            self.Y = tf.placeholder(tf.float32, [None, 2]) # Win : 1 Lose : 0
 
             # dropout (keep_prob) rate  0.7 on training, but should be 1 for testing
             self.keep_prob = tf.placeholder(tf.float32)
@@ -102,7 +102,7 @@ class SeLuModel:
             L3 = selu(tf.matmul(L2, W3) + b3)
             L3 = dropout_selu(L3, keep_prob=self.keep_prob)
 
-            W4 = tf.get_variable("W4", shape=[50, 1],
+            W4 = tf.get_variable("W4", shape=[50, 2],
                                  initializer=tf.contrib.layers.xavier_initializer())
             b4 = tf.Variable(tf.random_normal([1]), name='b4')
 
@@ -148,6 +148,85 @@ class SeLuModel:
     def get_logit(self):
         return self.hypothesis
 
+class RNN:
+    def __init__(self, sess, name, learn_rate):
+        self.sess = sess
+        self.name = name
+        self._build_net(learn_rate)
+
+    def _build_net(self, learn_rate):
+        with tf.variable_scope(self.name):
+            # input place holders
+            self.X = tf.placeholder(tf.float32, [None, 58])
+            self.Y = tf.placeholder(tf.float32, [None, 2]) # Win : 1 Lose : 0
+
+            # dropout (keep_prob) rate  0.7 on training, but should be 1 for testing
+            self.keep_prob = tf.placeholder(tf.float32)
+
+            # weights & bias for nn layers
+            W1 = tf.get_variable("W1", shape=[58, 100],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b1 = tf.Variable(tf.random_normal([100]), name='b1')
+            L1 = selu(tf.matmul(self.X, W1) + b1)
+            L1 = dropout_selu(L1, keep_prob=self.keep_prob)
+
+            W2 = tf.get_variable("W2", shape=[100, 100],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b2 = tf.Variable(tf.random_normal([100]), name='b2')
+            L2 = selu(tf.matmul(L1, W2) + b2)
+            L2 = dropout_selu(L2, keep_prob=self.keep_prob)
+
+            W3 = tf.get_variable("W3", shape=[100, 50],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b3 = tf.Variable(tf.random_normal([50]), name='b3')
+            L3 = selu(tf.matmul(L2, W3) + b3)
+            L3 = dropout_selu(L3, keep_prob=self.keep_prob)
+
+            W4 = tf.get_variable("W4", shape=[50, 2],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b4 = tf.Variable(tf.random_normal([1]), name='b4')
+
+            param_list = [W1, b1, W2, b2, W3, b3, W4, b4]
+            self.saver = tf.train.Saver(param_list)
+
+            self.hypothesis = tf.matmul(L3, W4) + b4 # Probability of winning
+
+            tf.add_to_collection("logit", self.hypothesis)
+        # define cost/loss & optimizer
+        # self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO: Need to find a better cost func.
+        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y))
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=learn_rate).minimize(self.cost)
+
+        # Test model and check accuracy
+        # predicted = tf.cast(self.hypothesis > 0.5, dtype=tf.float32)
+        # self.accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted, self.Y), dtype=tf.float32))
+        self.accuracy = tf.reduce_mean(tf.abs(self.hypothesis - self.Y))
+
+    def get_accuracy(self, x_test, y_test, keep_prop=1.0):
+        return self.sess.run(self.accuracy, feed_dict={self.X: x_test, self.Y: y_test, self.keep_prob: keep_prop})
+
+    def train(self, x_data, y_data, keep_prop):
+        return self.sess.run([self.cost, self.optimizer], feed_dict={
+            self.X: x_data, self.Y: y_data, self.keep_prob: keep_prop})
+
+    def save(self):
+        saver = tf.train.Saver()
+        if not os.path.exists(DIRNAME):
+            os.makedirs(DIRNAME)
+        saver.save(self.sess, DIRNAME + '/' + self.name + '.ckpt')
+        saver.export_meta_graph(DIRNAME + '/saved_graphs/' + self.name + '.meta')
+
+    def predict(self, x_test, keep_prop=1.0):
+        self.saver.restore(self.sess, DIRNAME + '/' + self.name + '.ckpt')
+        return self.sess.run(self.hypothesis, feed_dict={self.X: x_test, self.keep_prob: keep_prop})
+    
+    @property
+    def get_sess(self):
+        return self.sess
+
+    @property
+    def get_logit(self):
+        return self.hypothesis
 
 class Runner:
 

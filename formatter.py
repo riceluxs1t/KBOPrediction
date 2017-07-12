@@ -4,13 +4,6 @@ from constants import TEAM_NAMES
 TEAM_HIST = {}
 # 그 전 10경기에 대한 stat
 
-# # Open, High, Low, Volume, Close
-# xy = np.loadtxt('data-02-stock_daily.csv', delimiter=',')
-# xy = xy[::-1]  # reverse order (chronically ordered)
-# xy = MinMaxScaler(xy)
-# x = xy
-# y = xy[:, [-1]]  # Close as label
-
 # # build a dataset
 # dataX = []
 # dataY = []
@@ -44,6 +37,7 @@ def create_data(data, train_prop):
 	trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
 	testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
 
+	return trainX, trainY, testX, testY
 
 
 """
@@ -57,7 +51,7 @@ def format(data):
 	# winner = [0] # Winner : 1 if home 0 if away
 	result = [
 		data['score_board']['summary']['home']['r']
-		# data['score_board']['summary']['away']['r']
+		data['score_board']['summary']['away']['r']
 	] # Home team's score
 
 	# Get the winner
