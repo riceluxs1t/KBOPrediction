@@ -17,12 +17,6 @@ from constants import *
 DIRNAME = os.path.dirname(os.path.realpath(__file__)) + '/saved_graphs'
 
 """
-Normalizer
-"""
-def min_max_scaler(data):
-    return (data-np.min(data,0))/(np.max(data,0)-np.min(data,0))
-
-"""
 Basic LSTM Cell
 """
 def lstm_cell(hidden_size):
@@ -34,7 +28,7 @@ class RNN:
         self.name = name
         self._build_net(learn_rate, hidden_size, sequence_length, stack_num)
         self.input_dim = 10 # TODO This will depend on the dim of the input data
-        self.output_dim = 2
+        self.output_dim = 1
 
     def _build_net(self, learn_rate, hidden_size, sequence_length, stack_num):
         with tf.variable_scope(self.name):

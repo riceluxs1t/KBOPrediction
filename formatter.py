@@ -2,51 +2,50 @@ from constants import TEAM_NAMES
 
 
 TEAM_HIST = {}
-# 그 전 10경기에 대한 stat
 
-# # build a dataset
-# dataX = []
-# dataY = []
-# for i in range(0, len(y) - seq_length):
-#     _x = x[i:i + seq_length]
-#     _y = y[i + seq_length]  # Next close price
-#     # print(_x, "->", _y)
-#     dataX.append(_x)
-#     dataY.append(_y)
+class formatter:
+	"""
+	Given the season data,
+	"""
+	# TODO:// X: previous 'sequence_length' game results of home/away team Y: current game result [home, away]
 
-# # train/test split
-# train_size = int(len(dataY) * 0.7)
-# test_size = len(dataY) - train_size
-# trainX, testX = np.array(dataX[0:train_size]), np.array(
-#     dataX[train_size:len(dataX)])
-# trainY, testY = np.array(dataY[0:train_size]), np.array(
-#     dataY[train_size:len(dataY)])
+	def __init__(self, data, train_size, seq_length):
+		self.data = data
+		self.train_size = train_size
+		self.seq_length = seq_length
 
-def create_data(data, train_prop):
-	dataX = []
-	dataY = []
+	def create_data(self):
+		# # build a dataset
+		# dataX = []
+		# dataY = []
+		# for i in range(0, len(y) - seq_length):
+		#     _x = x[i:i + seq_length]
+		#     _y = y[i + seq_length]  # Next close price
+		#     # print(_x, "->", _y)
+		#     dataX.append(_x)
+		#     dataY.append(_y)
 
-	for i in range(len(data)):
-		# Put home team data
-		x_val, y_val = format(data[i])
-		dataX.append(x_val)
-		dataY.append(y_val)
-
-	train_size = int(len(dataY) * train_prop)
-	test_size = len(dataY) - train_size
-	trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
-	testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
-
-	return trainX, trainY, testX, testY
+		for i in range(len(data)):
+			# Put home team data
+			x_val, y_val = format(data[i])
+			dataX.append(x_val)
+			dataY.append(y_val)
 
 
-"""
-Formats the data into x_val and y_val
-@param JSON value
-@returns x_val, y_val
-"""
-def format(data):
-	home = []
+		train_size = int(len(dataY) * train_prop)
+		test_size = len(dataY) - train_size
+		trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
+		testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
+
+		return trainX, trainY, testX, testY
+
+	"""
+	Formats the data into x_val and y_val
+	@param JSON value
+	@returns x_val, y_val
+	"""
+	def format(self):
+		home = []
 	away = []
 	# winner = [0] # Winner : 1 if home 0 if away
 	result = [
@@ -109,5 +108,6 @@ def format(data):
 			home.append(v1)
 
 	return home + away, result
+
 
 
