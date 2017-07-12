@@ -55,7 +55,8 @@ class RNN:
             self.saver = tf.train.Saver(param_list)
             tf.add_to_collection("logit", self.hypothesis)
         # define cost/loss & optimizer
-        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y)) # TODO 
+        # TODO Having two outputs? What would be the best cost function? or Is this cost suitable
+        self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y))
         self.optimizer = tf.train.AdamOptimizer(learning_rate=learn_rate).minimize(self.cost)
 
         # Test model and check accuracy
@@ -99,9 +100,6 @@ class Runner:
             c, _ = model.train(x_train, y_train)
             if epoch % 200 == 0:
             	print ('Epoch:', '%04d' % (epoch), 'cost =', '{:.9f}'.format(c))
-
-        #TODO: Save frozen graph of the tf after training. 
-        #Refer to: https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc
 
     def get_accuracy(self, model, x_test, y_test):
         return model.get_accuracy(x_test, y_test)
