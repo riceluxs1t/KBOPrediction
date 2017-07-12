@@ -52,7 +52,7 @@ if __name__ == '__main__':
             )
 
         ## ======== Call team data ======
-        trainX, trainY, testX, testY = team_date.getData(TEAM_NAMES[team])
+        trainX, trainY, testX, testY = team_date.get_data(TEAM_NAMES[team])
 
         ## ======== Train model ======
         print("Started the training the model for ", team)

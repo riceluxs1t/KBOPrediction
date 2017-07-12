@@ -8,7 +8,6 @@ class formatter:
 	Given the season data, create train data and test data for each team and store it in the dictionary
 	s.t has team name as the key and data set as the value.
 	"""
-	# TODO:// X: previous 'sequence_length' game results of home/away team Y: current game result [home, away]
 	def __init__(self, data, train_size, seq_length):
 		self.train_size = train_size
 		self.seq_length = seq_length
@@ -61,8 +60,9 @@ class formatter:
 	"""
 	def create_data(self):
 		for team in TEAM_NAMES.values():
-			x = self.team_hist[team]
-			y = self.team_hist[team][:, [-1]]
+			xy = np.array(self.team_hist[team])
+			x = xy
+			y = xy[:, [-1]]
 
 			dataX = []
 			dataY = []
@@ -70,10 +70,14 @@ class formatter:
 				dataX.append(x[i : i + self.seq_length])
 				dataY.append(y[i + self.seq_length])
 
-
 			train_size = int(len(dataY) * self.train_size)
 			trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
 			testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
 
-			self.team_data = [trainX, trainY, testX, testY]
+			self.team_data[team] = [trainX, trainY, testX, testY]
 
+	"""
+	Getter for the team's data
+	"""
+	def get_data(self, team_name):
+		return self.team_data[team_name]
