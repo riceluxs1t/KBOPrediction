@@ -19,9 +19,9 @@ parser.add_argument('year', type=int, help='The year of data to train the model 
 parser.add_argument('train_size', type=float, help='The proportion of the training set to the test set')
 parser.add_argument('learn_rate', type=float, help='The learning rate')
 parser.add_argument('epoch', type=int, help='Training epoch')
-parser.add_argument('sequence_length', type=float, help='Sequence length')
-parser.add_argument('stack_num', type=float, help='The size of LSTM cell stack')
-
+parser.add_argument('sequence_length', type=int, help='Sequence length')
+parser.add_argument('stack_num', type=int, help='The size of LSTM cell stack')
+parser.add_argument('hidden_size', type=int, help='The hidden size of the cell output')
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -33,9 +33,8 @@ if __name__ == '__main__':
     elif args.year == 2016:
         file_name = DATA_16
     f = open(DIRNAME + "/" + file_name, 'r')
-    print("Load JSON data")
+    print("Loading JSON data")
     data = json.load(f)
-
     # formatter class that contains trainX, trainY, testX, testY for individual teams
     team_date = formatter(data, args.train_size, args.sequence_length)
 
@@ -53,9 +52,9 @@ if __name__ == '__main__':
 
         ## ======== Call team data ======
         trainX, trainY, testX, testY = team_date.get_data(TEAM_NAMES[team])
-
+        print("The dimension of the input :", len(trainX[0]))
         ## ======== Train model ======
-        print("Started the training the model for ", team)
+        print("Started the training the model for", TEAM_NAMES[team])
         kbo_runner = Runner()
         kbo_runner.train_run(
             kbo_pred_model,

@@ -8,12 +8,10 @@ import random
 Tensorflow Implementation of the Scaled ELU function and Dropout
 Taken from https://github.com/hunkim/DeepLearningZeroToAll
 '''
-import numbers
 import tensorflow as tf
 from tensorflow.contrib import rnn
 import numpy as np
 
-from constants import *
 
 DIRNAME = os.path.dirname(os.path.realpath(__file__)) + '/saved_graphs'
 
@@ -31,14 +29,13 @@ class RNN:
         self.sess = sess
         self.name = name
         self._build_net(learn_rate, hidden_size, sequence_length, stack_num)
-        self.input_dim = 10  # TODO This will depend on the dim of the input data
-        self.output_dim = 1
+        self.saver = tf.train.Saver()
 
     def _build_net(self, learn_rate, hidden_size, sequence_length, stack_num):
         with tf.variable_scope(self.name):
             # input place holders
-            self.X = tf.placeholder(tf.float32, [None, sequence_length, self.input_dim])
-            self.Y = tf.placeholder(tf.float32, [None, self.output_dim])  # Home : r, Away: r'
+            self.X = tf.placeholder(tf.float32, [None, sequence_length, 11])
+            self.Y = tf.placeholder(tf.float32, [None, 1])  # Team score
 
             multi_cells = rnn.MultiRNNCell([lstm_cell(hidden_size) for _ in range(stack_num)], state_is_tuple=True)
 
@@ -47,10 +44,8 @@ class RNN:
                 self.X,
                 dtype=tf.float32)
 
-            self.hypothesis = tf.contrib.layers.fully_connected(outputs[:, -1], self.output_dim, activation_fn=None)
+            self.hypothesis = tf.contrib.layers.fully_connected(outputs[:, -1], 1, activation_fn=None)
 
-            param_list = [multi_cells, _states]
-            self.saver = tf.train.Saver(param_list)
             tf.add_to_collection("logit", self.hypothesis)
         # define cost/loss & optimizer
         # TODO Having two outputs? What would be the best cost function? or Is this cost suitable
@@ -73,7 +68,7 @@ class RNN:
         if not os.path.exists(DIRNAME):
             os.makedirs(DIRNAME)
         self.saver.save(self.sess, DIRNAME + '/' + self.name + '.ckpt')
-        self.saver.export_meta_graph(DIRNAME + '/saved_graphs/' + self.name + '.meta')
+        self.saver.export_meta_graph(DIRNAME + '/' + self.name + '.meta')
 
     def predict(self, x_test):
         self.saver.restore(self.sess, DIRNAME + '/' + self.name + '.ckpt')

@@ -21,17 +21,11 @@ class formatter:
 	last element of the array.
 	"""
 	def create_hist(self, data):
-		for _ in range(0, len(data)):
+		for game in data:
 			home_hist = []
 			away_hist = []
 
-			for k1, v1 in data['score_board']['scores'].items():
-				if k1 == 'home':
-					home_hist += v1
-				else:
-					away_hist += v1
-
-			for k1, v1 in data['score_board']['summary'].items():
+			for k1, v1 in game['score_board']['summary'].items():
 				if k1 == 'home':
 					for k2, v2 in v1.items():
 						if k2 != 'r':
@@ -41,19 +35,19 @@ class formatter:
 						if k2 != 'r':
 							away_hist.append(v2)
 
-			for k1, v1 in data['away_team_standing'].items():
+			for k1, v1 in game['away_team_standing'].items():
 				if k1 != 'name':
 					away_hist.append(v1)
 
-			for k1, v1 in data['home_team_standing'].items():
+			for k1, v1 in game['home_team_standing'].items():
 				if k1 != 'name':
 					home_hist.append(v1)
 
-			home_hist.append(data['score_board']['summary']['home']['r'])
-			away_hist.append(data['score_board']['summary']['away']['r'])
+			home_hist.append(game['score_board']['summary']['home']['r'])
+			away_hist.append(game['score_board']['summary']['away']['r'])
 
-			self.team_hist[data['home_team_name']].append(home_hist)
-			self.team_hist[data['away_team_name']].append(away_hist)
+			self.team_hist[game['home_team_name']].append(home_hist)
+			self.team_hist[game['away_team_name']].append(away_hist)
 
 	"""
 	For each team put trainX, trainY, testX, testY in the team_data dictionary.
