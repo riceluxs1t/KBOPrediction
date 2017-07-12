@@ -21,7 +21,8 @@ parser.add_argument('train_size', type=float, help='The proportion of the traini
 parser.add_argument('model_name', type=str, help='The name of the model')
 parser.add_argument('learn_rate', type=float, help='The learning rate')
 parser.add_argument('epoch', type=int, help='Training epoch')
-parser.add_argument('drop_rate', type=float, help='Drop rate')
+parser.add_argument('sequence_length', type=float, help='Sequence length')
+parser.add_argument('stack_num', type=float, help='The size of LSTM cell stack')
 
 if __name__ == '__main__':
 	args = parser.parse_args()
@@ -32,14 +33,18 @@ if __name__ == '__main__':
 	print("Load JSON data")
 	data = json.load(f)
 
-	trainX, trainY, testX, testY = create_data(data, args.train_size) #TODO
+	# TODO:// X: previous 'sequence_length' game results of home/away team Y: current game result [home, away]
+	trainX, trainY, testX, testY = create_data(data, args.train_size, args.sequence_length) 
 
 	## ======== Build model ======
 	with tf.Session() as sess:
 		kbo_pred_model = SeLuModel(
 			sess, 
 			args.model_name, 
-			learn_rate=args.learn_rate
+			learn_rate=args.learn_rate,
+			hidden_size=args.hidden_size,
+			sequence_length=args.sequence_length,
+			stack_num=args.stack_num
 		)
 		
 
@@ -50,8 +55,7 @@ if __name__ == '__main__':
 			kbo_pred_model, 
 			trainX, 
 			trainY,
-			training_epoch=args.epoch, 
-			keep_prob=(1 - args.drop_rate)
+			training_epoch=args.epoch
 		)
 
 		## ======== Run test =========
