@@ -3,6 +3,7 @@ import os
 
 import tensorflow as tf
 import random
+
 '''
 Tensorflow Implementation of the Scaled ELU function and Dropout
 Taken from https://github.com/hunkim/DeepLearningZeroToAll
@@ -19,28 +20,31 @@ DIRNAME = os.path.dirname(os.path.realpath(__file__)) + '/saved_graphs'
 """
 Basic LSTM Cell
 """
+
+
 def lstm_cell(hidden_size):
     return rnn.BasicLSTMCell(num_units=hidden_size, state_is_tuple=True, activation=tf.tanh)
+
 
 class RNN:
     def __init__(self, sess, name, learn_rate, hidden_size, sequence_length, stack_num):
         self.sess = sess
         self.name = name
         self._build_net(learn_rate, hidden_size, sequence_length, stack_num)
-        self.input_dim = 10 # TODO This will depend on the dim of the input data
+        self.input_dim = 10  # TODO This will depend on the dim of the input data
         self.output_dim = 1
 
     def _build_net(self, learn_rate, hidden_size, sequence_length, stack_num):
         with tf.variable_scope(self.name):
             # input place holders
             self.X = tf.placeholder(tf.float32, [None, sequence_length, self.input_dim])
-            self.Y = tf.placeholder(tf.float32, [None, self.output_dim]) # Home : r, Away: r'
+            self.Y = tf.placeholder(tf.float32, [None, self.output_dim])  # Home : r, Away: r'
 
             multi_cells = rnn.MultiRNNCell([lstm_cell(hidden_size) for _ in range(stack_num)], state_is_tuple=True)
 
             outputs, _states = tf.nn.dynamic_rnn(
-                multi_cells, 
-                self.X, 
+                multi_cells,
+                self.X,
                 dtype=tf.float32)
 
             self.hypothesis = tf.contrib.layers.fully_connected(outputs[:, -1], self.output_dim, activation_fn=None)
@@ -74,7 +78,7 @@ class RNN:
     def predict(self, x_test):
         self.saver.restore(self.sess, DIRNAME + '/' + self.name + '.ckpt')
         return self.sess.run(self.hypothesis, feed_dict={self.X: x_test})
-    
+
     @property
     def get_sess(self):
         return self.sess
@@ -83,8 +87,8 @@ class RNN:
     def get_logit(self):
         return self.hypothesis
 
-class Runner:
 
+class Runner:
     def __init__(self):
         tf.set_random_seed(777)  # reproducibility
 
@@ -93,11 +97,10 @@ class Runner:
         for epoch in range(training_epoch):
             c, _ = model.train(x_train, y_train)
             if epoch % 200 == 0:
-            	print ('Epoch:', '%04d' % (epoch), 'cost =', '{:.9f}'.format(c))
+                print('Epoch:', '%04d' % (epoch), 'cost =', '{:.9f}'.format(c))
 
     def get_accuracy(self, model, x_test, y_test):
         return model.get_accuracy(x_test, y_test)
 
     def predict(self, model, x_test):
         return model.predict(x_test)
-
