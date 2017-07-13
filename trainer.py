@@ -54,7 +54,7 @@ if __name__ == '__main__':
         trainX, trainY, testX, testY = team_date.get_data(TEAM_NAMES[team])
         print("The dimension of the input :", len(trainX[0]))
         ## ======== Train model ======
-        print("Started the training the model for", TEAM_NAMES[team])
+        print("Started training the model for", TEAM_NAMES[team])
         kbo_runner = Runner()
         kbo_runner.train_run(
             kbo_pred_model,
