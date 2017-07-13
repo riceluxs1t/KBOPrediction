@@ -31,3 +31,7 @@ STADIUM_NAMES = {
     '고척': 'GoChuk',
     '수원': 'SuWon'
 }
+
+## Data location
+DATA_17 = "2017_data.txt"
+DATA_16 = "2016_data.txt"
