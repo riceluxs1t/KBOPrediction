@@ -1,113 +1,72 @@
-from constants import TEAM_NAMES
+from collections import defaultdict
+from constants import *
+import numpy as np
 
 
-TEAM_HIST = {}
-# 그 전 10경기에 대한 stat
+class formatter:
+	"""
+	Given the season data, create train data and test data for each team and store it in the dictionary
+	s.t has team name as the key and data set as the value.
+	"""
+	def __init__(self, data, train_size, seq_length):
+		self.seq_length = seq_length
+		self.train_size = train_size
+		self.team_hist = defaultdict(list)
+		self.create_data(data)
 
-# # build a dataset
-# dataX = []
-# dataY = []
-# for i in range(0, len(y) - seq_length):
-#     _x = x[i:i + seq_length]
-#     _y = y[i + seq_length]  # Next close price
-#     # print(_x, "->", _y)
-#     dataX.append(_x)
-#     dataY.append(_y)
+	"""
+	Put all the records of a team to a dictionary. The result being at the
+	last element of the array.
+	"""
+	def create_data(self, data): #여기서 counter check and then add to the data set.
 
-# # train/test split
-# train_size = int(len(dataY) * 0.7)
-# test_size = len(dataY) - train_size
-# trainX, testX = np.array(dataX[0:train_size]), np.array(
-#     dataX[train_size:len(dataX)])
-# trainY, testY = np.array(dataY[0:train_size]), np.array(
-#     dataY[train_size:len(dataY)])
+		dataX_home = []
+		dataX_away = []
+		dataY = []
+		
+		for game in data:
+			home_hist = []
+			away_hist = []
 
-def create_data(data, train_prop):
-	dataX = []
-	dataY = []
+			for k1, v1 in game['score_board']['summary'].items():
+				if k1 == 'home':
+					for k2, v2 in v1.items():
+						if k2 != 'r':
+							home_hist.append(v2)
+				else:
+					for k2, v2 in v1.items():
+						if k2 != 'r':
+							away_hist.append(v2)
 
-	for i in range(len(data)):
-		# Put home team data
-		x_val, y_val = format(data[i])
-		dataX.append(x_val)
-		dataY.append(y_val)
+			for k1, v1 in game['away_team_standing'].items():
+				if k1 != 'name':
+					away_hist.append(v1)
 
-	train_size = int(len(dataY) * train_prop)
-	test_size = len(dataY) - train_size
-	trainX, trainY = np.array(dataX[:train_size]), np.array(dataY[:train_size])
-	testX, testY = np.array(dataX[train_size:]), np.array(dataY[train_size:])
+			for k1, v1 in game['home_team_standing'].items():
+				if k1 != 'name':
+					home_hist.append(v1)
 
-	return trainX, trainY, testX, testY
+			home_hist.append(game['score_board']['summary']['home']['r'])
+			away_hist.append(game['score_board']['summary']['away']['r'])
 
+			if len(self.team_hist[game['home_team_name']]) >= self.seq_length and len(self.team_hist[game['away_team_name']]) >= self.seq_length:
+				dataX_home.append(sum(self.team_hist[game['home_team_name']][-self.seq_length:], [])) # Concat all 
+				dataX_away.append(sum(self.team_hist[game['away_team_name']][-self.seq_length:], []))
+				dataY.append([home_hist[-1], away_hist[-1]])
 
-"""
-Formats the data into x_val and y_val
-@param JSON value
-@returns x_val, y_val
-"""
-def format(data):
-	home = []
-	away = []
-	# winner = [0] # Winner : 1 if home 0 if away
-	result = [
-		data['score_board']['summary']['home']['r']
-		data['score_board']['summary']['away']['r']
-	] # Home team's score
+			self.team_hist[game['home_team_name']].append(home_hist)
+			self.team_hist[game['away_team_name']].append(away_hist)
 
-	# Get the winner
-	# if data['score_board']['summary']['home']['r'] > data['score_board']['summary']['away']['r']:
-	# 	winner[0] = 1
+		train_size = int(len(dataY) * self.train_size)
+		trainX_home, trainX_away, trainY = np.array(dataX_home[:train_size]), np.array(dataX_away[:train_size]), np.array(dataY[:train_size])
+		testX_home, testX_away, testY = np.array(dataX_home[train_size:]), dataX_away[train_size:], np.array(dataY[train_size:])
 
-	for k1, v1 in data['score_board']['summary'].items():
-		if k1 == 'home':
-			for k2, v2 in v1.items():
-				if k2 != 'r':
-					home.append(v2)
-		else:
-			for k2, v2 in v1.items():
-				if k2 != 'r':
-					away.append(v2)
+		self.team_data = [trainX_home, trainX_away, trainY, testX_home, testX_away, testY]
 
-	for k1, v1 in data['pitcher_info'].items():
-		if k1 == 'home':
-			for k2, v2 in v1[0].items():
-				if k2 != 'name':
-					if k2 == 'era':
-						home.append(float(v2))
-					else:	
-						home.append(v2)
-		else:
-			for k2, v2 in v1[0].items():
-				if k2 != 'name':
-					if k2 == 'era':
-						away.append(float(v2))
-					else:	
-						away.append(v2)
-
-	for k1, v1 in data['batter_info'].items():
-			if k1 == 'home':
-				for k2, v2 in v1[0].items():
-					if k2 != 'name':
-						if k2 == 'hra':
-							home.append(float(v2))
-						else:
-							home.append(v2)
-			else:
-				for k2, v2 in v1[0].items():
-					if k2 != 'name':
-						if k2 == 'hra':
-							away.append(float(v2))
-						else:
-							away.append(v2)
-
-	for k1, v1 in data['away_team_standing'].items():
-		if k1 != 'name':
-			away.append(v1)
-
-	for k1, v1 in data['home_team_standing'].items():
-		if k1 != 'name':
-			home.append(v1)
-
-	return home + away, result
-
+	"""
+	Getter for the team's data
+	Later to be used to predict the result
+	"""
+	def get_data(self):
+		return self.team_data
 

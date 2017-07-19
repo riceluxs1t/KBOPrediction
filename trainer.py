@@ -36,79 +36,49 @@ if __name__ == '__main__':
     print("Loading JSON data")
     data = json.load(f)
 
-    # TODOs
+    print("Preprocessing the data")
     # formatter class that contains trainX, trainY, testX, testY for individual teams
-    team_date = formatter(data, args.train_size, args.sequence_length)
+    formatter = formatter(data, args.train_size, args.sequence_length)
+    trainX_home, trainX_away, trainY, testX_home, testX_away, testY = formatter.get_data() #TODO
 
-	trainX, trainY, testX, testY = create_data(data, args.train_size) #TODO
+    ## ======== Build model ======
+    with tf.Session() as sess:
+        kbo_pred_model = SeLuModel(
+            sess, 
+            args.model_name, 
+            learn_rate=args.learn_rate,
+            sequence_length=args.sequence_length
+        )
+        
 
-	## ======== Build model ======
-	with tf.Session() as sess:
-		kbo_pred_model = SeLuModel(
-			sess, 
-			args.model_name, 
-			learn_rate=args.learn_rate
-		)
-		
+        ## ======== Train model ======
+        print("Started the training...")
+        kbo_runner = Runner()
+        kbo_runner.train_run(
+            kbo_pred_model, 
+            trainX_home, 
+            trainX_away, 
+            trainY,
+            training_epoch=args.epoch, 
+            keep_prob=(1 - args.drop_rate)
+        )
+        print("Training done.")
+        print("Start Testing")
+        ## ======== Run test =========
+        accuracy = kbo_runner.get_accuracy(
+            kbo_pred_model, 
+            testX_home, 
+            testX_away, 
+            testY
+        )
 
-		## ======== Train model ======
-		print("Started the training...")
-		kbo_runner = Runner()
-		kbo_runner.train_run(
-			kbo_pred_model, 
-			trainX, 
-			trainY,
-			training_epoch=args.epoch, 
-			keep_prob=(1 - args.drop_rate)
-		)
+        print("The percentage of the games predicted correctly")
+        print(accuracy)
 
-		## ======== Run test =========
-		accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
-
-		print("Model Average Error: ")
-		print(accuracy)
-
-		## ======= Save the trained model ======
-		print("Saving the trained model...")
-		kbo_pred_model.save()
-		print("Save complete.")
-
-    # for team in TEAM_NAMES:
-    #     ## ======== Build model ======
-    #     with tf.Session() as sess:
-    #         kbo_pred_model = RNN(
-    #             sess,
-    #             TEAM_NAMES[team],
-    #             learn_rate=args.learn_rate,
-    #             hidden_size=args.hidden_size,
-    #             sequence_length=args.sequence_length,
-    #             stack_num=args.stack_num
-    #         )
-    #
-    #     ## ======== Call team data ======
-    #     trainX, trainY, testX, testY = team_date.get_data(TEAM_NAMES[team])
-    #     print("The dimension of the input :", len(trainX[0]))
-    #     ## ======== Train model ======
-    #     print("Started training the model for", TEAM_NAMES[team])
-    #     kbo_runner = Runner()
-    #     kbo_runner.train_run(
-    #         kbo_pred_model,
-    #         trainX,
-    #         trainY,
-    #         training_epoch=args.epoch
-    #     )
-    #     print("Done training")
-    #     print("Started testing")
-    #     ## ======== Run test =========
-    #     accuracy = kbo_runner.get_accuracy(kbo_pred_model, testX, testY)
-    #
-    #     print("Model Average Error: ")
-    #     print(accuracy)
-    #     ## ======= Save the trained model ======
-    #     print("Saving the trained model...")
-    #     kbo_pred_model.save()
-    #     print("Save complete.")
-
+        ## ======= Save the trained model ======
+        print("Saving the trained model...")
+        kbo_pred_model.save()
+        print("Save complete.")
 
 
 
