@@ -1,44 +1,47 @@
-# Taken from SELU implementation from https://github.com/bioinf-jku/SNNs/blob/master/selu.py
-import os
-
-import tensorflow as tf
-import random
-'''
-Tensorflow Implementation of the Scaled ELU function and Dropout
-Taken from https://github.com/hunkim/DeepLearningZeroToAll
-'''
 import numbers
+import os
+import random
+import tensorflow as tf
 from tensorflow.contrib import layers
 from tensorflow.python.framework import ops, tensor_shape, tensor_util
 from tensorflow.python.ops import math_ops, random_ops, array_ops
 from tensorflow.python.layers import utils
-
 from constants import *
-
-DIRNAME = os.path.dirname(os.path.realpath(__file__)) + '/saved_graphs'
 
 
 class SeLuModel:
 
     def __init__(self, sess, name, learn_rate, sequence_length):
+        """
+        sess = Tensorflow Session
+        name = Model name
+        learn_rate = Train learning rate
+        sequence_length = The number of previous games to look at for each game.
+        """
         self.sess = sess
         self.name = name
         self._build_net(learn_rate, sequence_length)
         self.saver = tf.train.Saver()
+        self.dirname = os.path.dirname(os.path.realpath(__file__)) + '/saved_graphs'
 
     def _build_net(self, learn_rate, sequence_length):
+        """
+        learn_rate = Train learning rate
+        sequence_length = The number of previous games to look at for each game.
+        Construct a Neural Network.
+        Each input data of home team and away team will pass through auto encoder/decoder to 
+        reduce the hidden factor to the game among different teams.
+        Then, the inputs go through layers of NN to output the predicted result of the game.
+        """
         with tf.variable_scope(self.name):
             # input place holders
             self.X_home = tf.placeholder(tf.float32, [None, 11 * sequence_length])
             self.X_away = tf.placeholder(tf.float32, [None, 11 * sequence_length])
-            self.Y = tf.placeholder(tf.float32, [None, 2]) # Winner's score Loser's score
+            self.Y = tf.placeholder(tf.float32, [None, 2])
 
-            # dropout (keep_prob) rate  0.7 on training, but should be 1 for testing
             self.keep_prob = tf.placeholder(tf.float32)
 
             # weights & bias for nn layers
-            # TODO edit the NN structure 
-            # TODO autoencoder/decoder for h and a to generalize the team
             W1h_encoder = tf.get_variable("W1_home_encoder", shape=[11 * sequence_length, 11],
                                  initializer=tf.contrib.layers.xavier_initializer())
             b1h_encoder = tf.Variable(tf.random_normal([11]), name='b1_home_encoder')
@@ -81,9 +84,6 @@ class SeLuModel:
                                  initializer=tf.contrib.layers.xavier_initializer())
             b4 = tf.Variable(tf.random_normal([2]), name='b4')
 
-            # param_list = [W1h, W1a, b1h, b1a, W2, b2, W3, b3]
-            # self.saver = tf.train.Saver(param_list)
-
             self.hypothesis = tf.matmul(L3, W4) + b4 # Probability of winning
 
             tf.add_to_collection("logit", self.hypothesis)
@@ -91,12 +91,11 @@ class SeLuModel:
         self.cost = tf.reduce_sum(tf.square(self.hypothesis - self.Y))
         self.optimizer = tf.train.AdamOptimizer(learning_rate=learn_rate).minimize(self.cost)
 
-        # Test model and check accuracy
-
     def get_accuracy(self, x_test_home, x_test_away, y_test, keep_prop=1.0):
-        # compare hypothesis mapped to 1 and 0 depending on whether home team won or not
-        # with
-
+        """
+        The predictions from x_test_home and x_test_away are mapped to 1 or 0 depending on whether the
+        home team wins or not. Then it is compared with y_test which is the ground truth.
+        """
         predict = tf.map_fn(
             lambda x: x[0] > x[1],
             self.sess.run(
@@ -119,17 +118,28 @@ class SeLuModel:
                 tf.reduce_sum(tf.cast(tf.equal(predict, real), dtype=tf.int32)), len(y_test)))
 
     def train(self, x_test_home, x_test_away, y_data, keep_prop):
+        """
+        x* : The training data
+        y_data : The training ground truth
+        keep_prop : 1 - drop rate
+        """
         return self.sess.run([self.cost, self.optimizer], feed_dict={
             self.X_home: x_test_home, self.X_away: x_test_away, self.Y: y_data, self.keep_prob: keep_prop})
 
     def save(self):
-        if not os.path.exists(DIRNAME):
-            os.makedirs(DIRNAME)
-        self.saver.save(self.sess, DIRNAME + '/' + self.name + '.ckpt')
-        self.saver.export_meta_graph(DIRNAME + '/' + self.name + '.meta')
+        """
+        Saves the trained data to the given directory.
+        """
+        if not os.path.exists(self.dirname):
+            os.makedirs(self.dirname)
+        self.saver.save(self.sess, self.dirname + '/' + self.name + '.ckpt')
+        self.saver.export_meta_graph(self.dirname + '/' + self.name + '.meta')
 
     def predict(self, x_test_home, x_test_away, keep_prop=1.0):
-        self.saver.restore(self.sess, DIRNAME + '/' + self.name + '.ckpt')
+        """
+        Predicts the result based on the trained meta data.
+        """
+        self.saver.restore(self.sess, self.dirname + '/' + self.name + '.ckpt')
         return self.sess.run(self.hypothesis, feed_dict={
             self.X_home: x_test_home, self.X_away: x_test_away, self.keep_prob: keep_prop})
     
@@ -194,6 +204,11 @@ class Runner:
         tf.set_random_seed(777)  # reproducibility
 
     def train_run(self, model, x_train_home, x_train_away, y_train, training_epoch, keep_prob):
+        """
+        training_epoch : The number of iteration to train the data.
+        keep_prob : 1 - drop rate
+        Trains the model.
+        """
         model.get_sess.run(tf.global_variables_initializer())
         for epoch in range(training_epoch):
             c, _ = model.train(x_train_home, x_train_away, y_train, keep_prob)
@@ -205,4 +220,3 @@ class Runner:
 
     def predict(self, model, x_test_home, x_test_away):
         return model.predict(x_test_home, x_test_away)
-

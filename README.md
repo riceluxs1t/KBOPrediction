@@ -255,6 +255,7 @@ The number of layers can't be decided by the user yet but we are planning on let
 ### Note
 - Each layer of neural network will perform dropout according to the usr input.  
 - SeLU and AdamOptimzer were used in the architecture.  
+The SELU implementation taken from https://github.com/bioinf-jku/SNNs/blob/master/selu.py
 
 ### Getting Started
 To run the code you are required to use python3. I suggest following the below instruction to run the code.
@@ -301,8 +302,6 @@ The model takes in 7 inputs from the user.
 This is done automatically when ran train.py. The future use is to call the specific model in the future when we want to predict the result. We are still working on the frontend of the prediction model.  
 
 ## Authors
-Data scraping: Nate Namgun Kim  
+Data scraping: Nate Namgun Kim  nk15@rice.edu
 
-Prediction model: Jay JungHee Ryu  
-
-
+Prediction model: Jay JungHee Ryu  jr51@rice.edu

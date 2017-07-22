@@ -8,8 +8,7 @@ import numpy as np
 from builder import SeLuModel
 from builder import Runner
 from constants import *
-# from formatter import create_data
-from formatter import formatter
+from formatter import Formatter
 
 DIRNAME = os.path.dirname(os.path.realpath(__file__))
 
@@ -38,8 +37,8 @@ if __name__ == '__main__':
 
     print("Preprocessing the data")
     # formatter class that contains trainX, trainY, testX, testY for individual teams
-    formatter = formatter(data, args.train_size, args.sequence_length)
-    trainX_home, trainX_away, trainY, testX_home, testX_away, testY = formatter.get_data() #TODO
+    formatter = Formatter(data, args.train_size, args.sequence_length)
+    trainX_home, trainX_away, trainY, testX_home, testX_away, testY = formatter.get_data()
 
     ## ======== Build model ======
     with tf.Session() as sess:
@@ -79,8 +78,3 @@ if __name__ == '__main__':
         print("Saving the trained model...")
         kbo_pred_model.save()
         print("Save complete.")
-
-
-
-
-
