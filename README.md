@@ -1,30 +1,39 @@
-## Note
+#KBO Prediction Model
+
+
+## Data Scraping
+
+### Note
 Uses python3.6
 
-## Usage
+### Usage
 In order to obtain the entire 2017 KBO baseball data, simply run the following.
 ```python
 from scrape import *
-year = '2017'
-months = ['03', '04', '05', '06']
+year = '2015'
+months = ['03', '04', '05', '06', '07', '08', '09', '10']
 summaries = []
 for month in months:
     summaries += MatchSummaryParser(year, month).parse()
 
 matches = []
 for summary in summaries:
-    matches.append(
-        MatchDetailParser(
-            summary.year,
-            summary.month,
-            summary.day,
-            summary.get_away_team_name(),
-            summary.get_home_team_name()
-        ).parse()
-    )
+    try:
+        matches.append(
+            MatchDetailParser(
+                summary.year,
+                summary.month,
+                summary.day,
+                summary.get_away_team_name(),
+                summary.get_home_team_name()
+            ).parse()
+        )
+    except DetailDataNotFoundException:
+        # this is most likely a double header game.
+        pass
 ```
 
-## Baseball Terms Explained
+### Baseball Terms Explained
 
 summary.r : 점수
 
@@ -89,7 +98,7 @@ team_standing.loses : 종료 시점의 팀의 패수
 team_standing.rank : 종료 시점의 팀의 랭킹
 
 
-## For example
+### For example
 some specific game's data (with some pitchers and batters omitted for brevity)
 
 ```json
@@ -224,3 +233,78 @@ some specific game's data (with some pitchers and batters omitted for brevity)
   }
 ]
 ```
+
+## Prediction Model
+
+The prediction model employs the notion of Deep Learning to predict the result from the data. 
+
+The scraped data is parsed in the formatter.py to follow the below format:
+```
+hometeam's data = The summary + standing of the team's previous k games # k is the usr input.
+awayteam's data = The summary + standing of the team's previous k games
+
+result of the game = [x, y] 
+``` 
+
+The builder.py constructs the neural network that takes in the above format of data to be trained and predict the result of the game.
+
+When taking the individual team data, as we are not distinguishing the team specific statistics, auto encoder & decoder were used to get rid of such uncertainty then passed on to neural network.
+
+The number of layers can't be decided by the user yet but we are planning on letting the user take care of such details.
+
+### Note
+- Each layer of neural network will perform dropout according to the usr input.
+- SeLU and AdamOptimzer were used in the architecture.
+
+### Getting Started
+To run the code you are required to use python3. I suggest following below instruction to run the code.
+```
+virtualenv -p python3 .env
+source .env/bin/activate       
+pip install -r requirements.txt  
+# Run the code
+deactivate                       # Exit the virtual environment
+```
+
+### Predicting the model
+After activating the virtual envelop, run
+```
+python trainer.py -h
+
+# Result
+KBO Score Prediction Trainer
+
+positional arguments:
+  year             The year of data to train the model with
+  train_size       The proportion of the training set to the test set
+  model_name       The name of the model
+  learn_rate       The learning rate
+  sequence_length  Sequence length
+  epoch            Training epoch
+  drop_rate        Drop rate
+
+optional arguments:
+  -h, --help       show this help message and exit
+```
+to see what the user needs to provide.
+
+The model takes in 7 inputs from the user.
+1. The year of the game to train the Deep Learning model with.
+2. The proportion of the training set to the test set in the raw dataset.
+3. The name of the model. (For saving purpose)
+4. The learning rate of the model.
+5. The number of previous games the model should look at for each game.
+6. The iteration of training.
+7. The drop rate.
+
+###Saving the trained model
+This is done automatically when ran train.py.
+The purpose of this is to call the already trained model in the future.
+We are still working on the frontend of the prediction model.
+
+## Authors
+
+Data scraping: Nate Namgun Kim 
+Prediction model: Jay JungHee Ryu  
+
+
