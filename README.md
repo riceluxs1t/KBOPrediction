@@ -257,7 +257,7 @@ The number of layers can't be decided by the user yet but we are planning on let
 - SeLU and AdamOptimzer were used in the architecture.  
 
 ### Getting Started
-To run the code you are required to use python3. I suggest following below instruction to run the code.
+To run the code you are required to use python3. I suggest following the below instruction to run the code.
 ```
 virtualenv -p python3 .env
 source .env/bin/activate       
@@ -298,9 +298,7 @@ The model takes in 7 inputs from the user.
 7. The drop rate.
 
 ### Saving the trained model
-This is done automatically when ran train.py.  
-The purpose of this is to call the already trained model in the future.  
-We are still working on the frontend of the prediction model.  
+This is done automatically when ran train.py. The future use is to call the specific model in the future when we want to predict the result. We are still working on the frontend of the prediction model.  
 
 ## Authors
 Data scraping: Nate Namgun Kim  
