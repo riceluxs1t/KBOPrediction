@@ -253,8 +253,8 @@ When taking the individual team data, as we are not distinguishing the team spec
 The number of layers can't be decided by the user yet but we are planning on letting the user take care of such details.
 
 ### Note
-- Each layer of neural network will perform dropout according to the usr input.
-- SeLU and AdamOptimzer were used in the architecture.
+- Each layer of neural network will perform dropout according to the usr input.  
+- SeLU and AdamOptimzer were used in the architecture.  
 
 ### Getting Started
 To run the code you are required to use python3. I suggest following below instruction to run the code.
@@ -267,7 +267,7 @@ deactivate                       # Exit the virtual environment
 ```
 
 ### Predicting the model
-After activating the virtual envelop, run
+After activating the virtual envelop, run  
 ```
 python trainer.py -h
 
@@ -286,7 +286,7 @@ positional arguments:
 optional arguments:
   -h, --help       show this help message and exit
 ```
-to see what the user needs to provide.
+to see what the user needs to provide.  
 
 The model takes in 7 inputs from the user.
 1. The year of the game to train the Deep Learning model with.
@@ -298,12 +298,13 @@ The model takes in 7 inputs from the user.
 7. The drop rate.
 
 ### Saving the trained model
-This is done automatically when ran train.py. \n
-The purpose of this is to call the already trained model in the future. \n
-We are still working on the frontend of the prediction model.
+This is done automatically when ran train.py.  
+The purpose of this is to call the already trained model in the future.  
+We are still working on the frontend of the prediction model.  
 
 ## Authors
-Data scraping: Nate Namgun Kim \n
+Data scraping: Nate Namgun Kim  
+
 Prediction model: Jay JungHee Ryu  
 
 
