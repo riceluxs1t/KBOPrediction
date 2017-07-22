@@ -3,7 +3,7 @@ from constants import *
 import numpy as np
 
 
-class formatter:
+class Formatter:
 	"""
 	Given the season data, create train data and test data for each team and store it in the dictionary
 	s.t has team name as the key and data set as the value.
@@ -18,7 +18,7 @@ class formatter:
 	Put all the records of a team to a dictionary. The result being at the
 	last element of the array.
 	"""
-	def create_data(self, data): #여기서 counter check and then add to the data set.
+	def create_data(self, data):
 
 		dataX_home = []
 		dataX_away = []
