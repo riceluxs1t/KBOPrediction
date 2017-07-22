@@ -1,4 +1,4 @@
-#KBO Prediction Model
+# KBO Prediction Model
 
 
 ## Data Scraping
@@ -298,13 +298,12 @@ The model takes in 7 inputs from the user.
 7. The drop rate.
 
 ###Saving the trained model
-This is done automatically when ran train.py.
-The purpose of this is to call the already trained model in the future.
+This is done automatically when ran train.py. \n
+The purpose of this is to call the already trained model in the future. \n
 We are still working on the frontend of the prediction model.
 
 ## Authors
-
-Data scraping: Nate Namgun Kim 
+Data scraping: Nate Namgun Kim \n
 Prediction model: Jay JungHee Ryu  
 
 
