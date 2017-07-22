@@ -297,7 +297,7 @@ The model takes in 7 inputs from the user.
 6. The iteration of training.
 7. The drop rate.
 
-###Saving the trained model
+### Saving the trained model
 This is done automatically when ran train.py. \n
 The purpose of this is to call the already trained model in the future. \n
 We are still working on the frontend of the prediction model.
