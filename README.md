@@ -248,7 +248,7 @@ result of the game = [x, y]
 
 The builder.py constructs the neural network that takes in the above format of data to be trained and predict the result of the game.
 
-When taking the individual team data, as we are not distinguishing the team specific statistics, auto encoder & decoder were used to get rid of such uncertainty then passed on to neural network.
+When taking the individual team data, as we are not distinguishing the team specific statistics, auto encoder was used to get rid of such uncertain factors then passed on to the SeLU layers.
 
 The number of layers can't be decided by the user yet but we are planning on letting the user take care of such details.
 
@@ -299,9 +299,9 @@ The model takes in 7 inputs from the user.
 7. The drop rate.
 
 ### Saving the trained model
-This is done automatically when ran train.py. The future use is to call the specific model in the future when we want to predict the result. We are still working on the frontend of the prediction model.  
+This is done automatically when ran train.py. It is to call the specific model in the future when we want to predict the result. We are still working on the user interface of the prediction model.  
 
 ## Authors
 Data scraping: Nate Namgun Kim  nk15@rice.edu
 
-Prediction model: Jay JungHee Ryu  jr51@rice.edu
+Prediction model: Jay Junghee Ryu  jr51@rice.edu
