@@ -5,7 +5,7 @@ import numpy as np
 
 class Formatter:
 	"""
-	Given the season data, create train data and test data for each team and store it in the dictionary
+	Given the season data, creates train data and test data for each team and store it in the dictionary
 	s.t has team name as the key and data set as the value.
 	"""
 	def __init__(self, data, train_size, seq_length):

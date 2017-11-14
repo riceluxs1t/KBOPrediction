@@ -1,5 +1,4 @@
-# The keys are the displayed team names in the days data and the values are the internal
-# names of each team.
+# The keys are the displayed team names in the days data and the values are the internal names of each team.
 TEAM_NAMES = {
     'SK': 'SK',
     'KIA': 'KIA',

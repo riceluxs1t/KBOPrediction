@@ -1,7 +1,7 @@
 """
 https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc
 
-RESTful frontend will look something like the above.
+RESTful front end will look something like the above.
 """
 import os
 import argparse

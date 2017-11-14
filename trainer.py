@@ -25,7 +25,7 @@ parser.add_argument('drop_rate', type=float, help='Drop rate')
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    # ====== Open data file ======
+    # ===== Open data file =====
     file_name = ''
     if args.year == 2017:
         file_name = DATA_17

@@ -10,7 +10,7 @@ from constants import *
 
 
 class SeLuModel:
-
+    """The deep learning base model. """
     def __init__(self, sess, name, learn_rate, sequence_length):
         """
         sess = Tensorflow Session

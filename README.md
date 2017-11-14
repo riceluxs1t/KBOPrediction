@@ -1,5 +1,3 @@
-# KBO Prediction Model
-![image](https://user-images.githubusercontent.com/18581901/28494404-1553a01a-6ef3-11e7-968d-e8a9dfc8f218.jpg)
 
 ## Data Scraping
 
