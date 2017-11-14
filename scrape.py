@@ -11,7 +11,7 @@ class DetailDataNotFoundException(Exception):
 
 
 class MatchSummaryParser(object):
-    """ A class used to scrape match summary data.
+    """A class used to scrape match summary data.
 
     Supports the following three formats of data fetching.
     1) Get a whole month's match data.
