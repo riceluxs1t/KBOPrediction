@@ -7,11 +7,11 @@
 Uses python3.6
 
 ### Usage
-In order to obtain the entire 2017 KBO baseball data, simply run the following.
+In order to obtain the entire 2018 KBO baseball data as a JSON file, simply run the following.
 ```python
 from scrape import *
-year = '2015'
-months = ['03', '04', '05', '06', '07', '08', '09', '10']
+year = '2018'
+months = ['03', '04', '05', '06', '07']
 summaries = []
 for month in months:
     summaries += MatchSummaryParser(year, month).parse()
@@ -19,6 +19,7 @@ for month in months:
 matches = []
 for summary in summaries:
     try:
+	print(summary)
         matches.append(
             MatchDetailParser(
                 summary.year,
